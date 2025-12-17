@@ -11,6 +11,7 @@ interface CalendarProps {
   intakes?: Array<{
     id: string;
     ticketNumber: string;
+    vrNumber?: string | null;
     scheduledDate: Date | string;
     scheduledTimeWindow?: string | null;
     estimatedWeight: number;
@@ -174,6 +175,7 @@ export function Calendar({ intakes = [] }: CalendarProps) {
                         <Link key={intake.id} href={`/intakes/${intake.id}`}>
                           <div className="text-xs bg-emerald-50 text-emerald-700 p-1.5 rounded hover:bg-emerald-100 cursor-pointer transition-colors">
                             <div className="font-mono text-[10px] font-semibold truncate">{intake.ticketNumber}</div>
+                            {intake.vrNumber && <div className="truncate text-[10px] font-semibold">VR {intake.vrNumber}</div>}
                             <div className="truncate opacity-80 text-[10px]">{intake.estimatedWeight.toFixed(1)} tons</div>
                           </div>
                         </Link>
@@ -230,6 +232,7 @@ export function Calendar({ intakes = [] }: CalendarProps) {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-mono text-sm font-semibold text-emerald-600">{intake.ticketNumber}</span>
+                            {intake.vrNumber && <span className="text-xs font-semibold text-purple-700 bg-purple-100 px-2 py-0.5 rounded">VR {intake.vrNumber}</span>}
                           </div>
                           <p className="font-medium text-gray-900">{intake.client.companyName}</p>
                           {intake.scheduledTimeWindow && <p className="text-sm text-gray-500 mt-1">{intake.scheduledTimeWindow}</p>}
