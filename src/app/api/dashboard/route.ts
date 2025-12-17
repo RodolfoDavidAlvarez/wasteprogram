@@ -1,13 +1,9 @@
-import { NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import {
-  calculateCO2Avoided,
-  calculateLandfillSpaceSaved,
-  calculateCompostProduced,
-} from "@/lib/utils"
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { calculateCO2Avoided, calculateLandfillSpaceSaved, calculateCompostProduced } from "@/lib/utils";
 
-export const dynamic = "force-dynamic"
-export const runtime = "nodejs"
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function GET() {
   try {
@@ -35,12 +31,12 @@ export async function GET() {
           landfillSpaceSaved: 0,
           compostProduced: 0,
         },
-      })
+      });
     }
 
-    const now = new Date()
-    const startOfYear = new Date(now.getFullYear(), 0, 1)
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
     // Get YTD stats
     const ytdIntakes = await prisma.wasteIntake.aggregate({
@@ -55,7 +51,7 @@ export async function GET() {
         totalCharge: true,
       },
       _count: true,
-    })
+    });
 
     // Get month stats
     const monthIntakes = await prisma.wasteIntake.aggregate({
@@ -70,19 +66,19 @@ export async function GET() {
         totalCharge: true,
       },
       _count: true,
-    })
+    });
 
     // Get pending intakes count
     const pendingCount = await prisma.wasteIntake.count({
       where: {
         status: { in: ["pending", "approved", "scheduled"] },
       },
-    })
+    });
 
     // Get active clients count
     const activeClientsCount = await prisma.client.count({
       where: { status: "active" },
-    })
+    });
 
     // Get recent intakes
     const recentIntakes = await prisma.wasteIntake.findMany({
@@ -93,7 +89,7 @@ export async function GET() {
           select: { companyName: true },
         },
       },
-    })
+    });
 
     // Get upcoming schedule (next 7 days)
     const upcomingSchedule = await prisma.wasteIntake.findMany({
@@ -111,13 +107,13 @@ export async function GET() {
           select: { companyName: true },
         },
       },
-    })
+    });
 
     // Get monthly data for charts (last 6 months)
-    const monthlyData = []
+    const monthlyData = [];
     for (let i = 5; i >= 0; i--) {
-      const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0)
+      const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
 
       const monthData = await prisma.wasteIntake.aggregate({
         where: {
@@ -131,13 +127,13 @@ export async function GET() {
           actualWeight: true,
           totalCharge: true,
         },
-      })
+      });
 
       monthlyData.push({
         month: monthStart.toLocaleDateString("en-US", { month: "short" }),
         tons: monthData._sum.actualWeight || 0,
         revenue: monthData._sum.totalCharge || 0,
-      })
+      });
     }
 
     // Get waste by type
@@ -152,18 +148,18 @@ export async function GET() {
       _sum: {
         actualWeight: true,
       },
-    })
+    });
 
     const wasteTypeData = wasteByType.map((item) => ({
       name: item.wasteType.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
       value: item._sum.actualWeight || 0,
-    }))
+    }));
 
     // Calculate environmental impact
-    const totalWasteDiverted = ytdIntakes._sum.actualWeight || 0
-    const co2Avoided = calculateCO2Avoided(totalWasteDiverted)
-    const landfillSpaceSaved = calculateLandfillSpaceSaved(totalWasteDiverted)
-    const compostProduced = calculateCompostProduced(totalWasteDiverted)
+    const totalWasteDiverted = ytdIntakes._sum.actualWeight || 0;
+    const co2Avoided = calculateCO2Avoided(totalWasteDiverted);
+    const landfillSpaceSaved = calculateLandfillSpaceSaved(totalWasteDiverted);
+    const compostProduced = calculateCompostProduced(totalWasteDiverted);
 
     return NextResponse.json({
       stats: {
@@ -203,12 +199,9 @@ export async function GET() {
         landfillSpaceSaved,
         compostProduced,
       },
-    })
+    });
   } catch (error) {
-    console.error("Error fetching dashboard data:", error)
-    return NextResponse.json(
-      { error: "Failed to fetch dashboard data" },
-      { status: 500 }
-    )
+    console.error("Error fetching dashboard data:", error);
+    return NextResponse.json({ error: "Failed to fetch dashboard data" }, { status: 500 });
   }
 }
