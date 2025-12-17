@@ -1,20 +1,16 @@
-import { Header } from "@/components/layout/Header"
-import { StatsCard } from "@/components/dashboard/StatsCard"
-import { RecentIntakes } from "@/components/dashboard/RecentIntakes"
-import { WasteChart } from "@/components/dashboard/WasteChart"
-import { UpcomingSchedule } from "@/components/dashboard/UpcomingSchedule"
-import { EnvironmentalImpact } from "@/components/dashboard/EnvironmentalImpact"
-import { Tabs } from "@/components/ui/tabs"
-import { Calendar } from "@/components/schedule/Calendar"
-import { prisma } from "@/lib/prisma"
-import {
-  calculateCO2Avoided,
-  calculateLandfillSpaceSaved,
-  calculateCompostProduced,
-} from "@/lib/utils"
+import { Header } from "@/components/layout/Header";
+import { StatsCard } from "@/components/dashboard/StatsCard";
+import { RecentIntakes } from "@/components/dashboard/RecentIntakes";
+import { WasteChart } from "@/components/dashboard/WasteChart";
+import { UpcomingSchedule } from "@/components/dashboard/UpcomingSchedule";
+import { EnvironmentalImpact } from "@/components/dashboard/EnvironmentalImpact";
+import { Tabs } from "@/components/ui/tabs";
+import { Calendar } from "@/components/schedule/Calendar";
+import { prisma } from "@/lib/prisma";
+import { calculateCO2Avoided, calculateLandfillSpaceSaved, calculateCompostProduced } from "@/lib/utils";
 
-export const dynamic = "force-dynamic"
-export const runtime = "nodejs"
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 async function getDashboardData() {
   // Allow deployments to succeed before a DB is configured.
@@ -41,12 +37,12 @@ async function getDashboardData() {
         landfillSpaceSaved: 0,
         compostProduced: 0,
       },
-    }
+    };
   }
 
-  const now = new Date()
-  const startOfYear = new Date(now.getFullYear(), 0, 1)
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  const now = new Date();
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
   // Get YTD stats
   const ytdIntakes = await prisma.wasteIntake.aggregate({
@@ -61,7 +57,7 @@ async function getDashboardData() {
       totalCharge: true,
     },
     _count: true,
-  })
+  });
 
   // Get month stats
   const monthIntakes = await prisma.wasteIntake.aggregate({
@@ -76,19 +72,19 @@ async function getDashboardData() {
       totalCharge: true,
     },
     _count: true,
-  })
+  });
 
   // Get pending intakes count
   const pendingCount = await prisma.wasteIntake.count({
     where: {
       status: { in: ["pending", "approved", "scheduled"] },
     },
-  })
+  });
 
   // Get active clients count
   const activeClientsCount = await prisma.client.count({
     where: { status: "active" },
-  })
+  });
 
   // Get recent intakes
   const recentIntakes = await prisma.wasteIntake.findMany({
@@ -99,7 +95,7 @@ async function getDashboardData() {
         select: { companyName: true },
       },
     },
-  })
+  });
 
   // Get upcoming schedule (next 7 days)
   const upcomingSchedule = await prisma.wasteIntake.findMany({
@@ -117,13 +113,13 @@ async function getDashboardData() {
         select: { companyName: true },
       },
     },
-  })
+  });
 
   // Get monthly data for charts (last 6 months)
-  const monthlyData = []
+  const monthlyData = [];
   for (let i = 5; i >= 0; i--) {
-    const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0)
+    const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
 
     const monthData = await prisma.wasteIntake.aggregate({
       where: {
@@ -137,13 +133,13 @@ async function getDashboardData() {
         actualWeight: true,
         totalCharge: true,
       },
-    })
+    });
 
     monthlyData.push({
       month: monthStart.toLocaleDateString("en-US", { month: "short" }),
       tons: monthData._sum.actualWeight || 0,
       revenue: monthData._sum.totalCharge || 0,
-    })
+    });
   }
 
   // Get waste by type
@@ -158,16 +154,16 @@ async function getDashboardData() {
     _sum: {
       actualWeight: true,
     },
-  })
+  });
 
   const wasteTypeData = wasteByType.map((item) => ({
     name: item.wasteType.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
     value: item._sum.actualWeight || 0,
-  }))
+  }));
 
   // Get calendar intakes (this month and next)
-  const calendarStartOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0)
+  const calendarStartOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
 
   const calendarIntakes = await prisma.wasteIntake.findMany({
     where: {
@@ -183,13 +179,13 @@ async function getDashboardData() {
       },
     },
     orderBy: { scheduledDate: "asc" },
-  })
+  });
 
   // Calculate environmental impact
-  const totalWasteDiverted = ytdIntakes._sum.actualWeight || 0
-  const co2Avoided = calculateCO2Avoided(totalWasteDiverted)
-  const landfillSpaceSaved = calculateLandfillSpaceSaved(totalWasteDiverted)
-  const compostProduced = calculateCompostProduced(totalWasteDiverted)
+  const totalWasteDiverted = ytdIntakes._sum.actualWeight || 0;
+  const co2Avoided = calculateCO2Avoided(totalWasteDiverted);
+  const landfillSpaceSaved = calculateLandfillSpaceSaved(totalWasteDiverted);
+  const compostProduced = calculateCompostProduced(totalWasteDiverted);
 
   return {
     stats: {
@@ -230,18 +226,15 @@ async function getDashboardData() {
       landfillSpaceSaved,
       compostProduced,
     },
-  }
+  };
 }
 
 export default async function DashboardPage() {
-  const data = await getDashboardData()
+  const data = await getDashboardData();
 
   return (
     <div>
-      <Header
-        title="Dashboard"
-        subtitle="Waste Diversion Program Overview"
-      />
+      <Header title="Dashboard" subtitle="Waste Diversion Program Overview" />
       <div className="p-6 space-y-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -287,10 +280,7 @@ export default async function DashboardPage() {
         />
 
         {/* Charts */}
-        <WasteChart
-          monthlyData={data.monthlyData}
-          wasteTypeData={data.wasteTypeData}
-        />
+        <WasteChart monthlyData={data.monthlyData} wasteTypeData={data.wasteTypeData} />
 
         {/* Recent Intakes & Schedule */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -320,5 +310,5 @@ export default async function DashboardPage() {
         />
       </div>
     </div>
-  )
+  );
 }

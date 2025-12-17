@@ -12,11 +12,29 @@ interface CalendarProps {
     id: string;
     ticketNumber: string;
     vrNumber?: string | null;
+    statusTag?: "scheduled" | "delayed" | "moved" | "arrived" | null;
+    note?: string | null;
+    eta?: string | null;
     scheduledDate: Date | string;
     scheduledTimeWindow?: string | null;
     estimatedWeight: number;
     client: { companyName: string };
   }>;
+}
+
+type IntakeItem = NonNullable<CalendarProps["intakes"]>[number];
+
+function getStatusPill(statusTag?: IntakeItem["statusTag"]) {
+  switch (statusTag) {
+    case "delayed":
+      return { label: "DELAYED", className: "bg-amber-100 text-amber-900" };
+    case "moved":
+      return { label: "MOVED", className: "bg-red-100 text-red-900" };
+    case "arrived":
+      return { label: "ARRIVED", className: "bg-emerald-100 text-emerald-900" };
+    default:
+      return null;
+  }
 }
 
 export function Calendar({ intakes = [] }: CalendarProps) {
@@ -176,7 +194,15 @@ export function Calendar({ intakes = [] }: CalendarProps) {
                           <div className="text-xs bg-emerald-50 text-emerald-700 p-1.5 rounded hover:bg-emerald-100 cursor-pointer transition-colors">
                             <div className="font-mono text-[10px] font-semibold truncate">{intake.ticketNumber}</div>
                             {intake.vrNumber && <div className="truncate text-[10px] font-semibold">VR {intake.vrNumber}</div>}
-                            <div className="truncate opacity-80 text-[10px]">{intake.estimatedWeight.toFixed(1)} tons</div>
+                            {(() => {
+                              const pill = getStatusPill(intake.statusTag ?? null);
+                              return pill ? (
+                                <div className={`inline-flex rounded px-1.5 py-0.5 text-[9px] font-bold ${pill.className}`}>{pill.label}</div>
+                              ) : null;
+                            })()}
+                            <div className="truncate opacity-80 text-[10px]">
+                              {intake.estimatedWeight > 0 ? `${intake.estimatedWeight.toFixed(1)} tons` : "TBD tons"}
+                            </div>
                           </div>
                         </Link>
                       ))}
@@ -232,9 +258,24 @@ export function Calendar({ intakes = [] }: CalendarProps) {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-mono text-sm font-semibold text-emerald-600">{intake.ticketNumber}</span>
-                            {intake.vrNumber && <span className="text-xs font-semibold text-purple-700 bg-purple-100 px-2 py-0.5 rounded">VR {intake.vrNumber}</span>}
+                            {intake.vrNumber && (
+                              <span className="text-xs font-semibold text-purple-700 bg-purple-100 px-2 py-0.5 rounded">VR {intake.vrNumber}</span>
+                            )}
+                            {(() => {
+                              const pill = getStatusPill(intake.statusTag ?? null);
+                              return pill ? (
+                                <span className={`text-xs font-semibold px-2 py-0.5 rounded ${pill.className}`}>{pill.label}</span>
+                              ) : null;
+                            })()}
                           </div>
                           <p className="font-medium text-gray-900">{intake.client.companyName}</p>
+                          {(intake.eta || intake.note) && (
+                            <p className="text-xs text-gray-600 mt-1">
+                              {intake.eta ? `ETA ${intake.eta}` : ""}
+                              {intake.eta && intake.note ? " · " : ""}
+                              {intake.note ?? ""}
+                            </p>
+                          )}
                           {intake.scheduledTimeWindow && <p className="text-sm text-gray-500 mt-1">{intake.scheduledTimeWindow}</p>}
                         </div>
                         <div className="text-right">

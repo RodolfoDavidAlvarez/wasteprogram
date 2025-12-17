@@ -15,6 +15,9 @@ type CalendarIntake = {
   id: string;
   ticketNumber: string;
   vrNumber?: string | null;
+  statusTag?: "scheduled" | "delayed" | "moved" | "arrived" | null;
+  note?: string | null;
+  eta?: string | null;
   scheduledDate: Date | string;
   scheduledTimeWindow?: string | null;
   estimatedWeight: number;
@@ -25,6 +28,19 @@ type CalendarIntake = {
   pickupAddress?: string | null;
   wasteType?: string;
 };
+
+function asLocalDay(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function isSameDay(a: Date, b: Date) {
+  return asLocalDay(a).getTime() === asLocalDay(b).getTime();
+}
+
+function inRange(date: Date, start: Date, end: Date) {
+  const t = date.getTime();
+  return t >= start.getTime() && t <= end.getTime();
+}
 
 function getManualSchedule(): {
   weekIntakes: CalendarIntake[];
@@ -37,29 +53,45 @@ function getManualSchedule(): {
   const startOfWeek = new Date(now);
   startOfWeek.setDate(now.getDate() - now.getDay());
   startOfWeek.setHours(0, 0, 0, 0);
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  endOfWeek.setHours(23, 59, 59, 999);
 
   // TODO: Replace this with DB-backed schedule once production DATABASE_URL is configured.
   // For now, keep this list updated manually (VR numbers + tons).
+  const y = 2025;
+  const m = 11; // December (0-indexed)
+  const date = (day: number) => new Date(y, m, day);
+
+  // VR numbers from email thread (Casey Tucker / Vanguard)
   const calendarIntakes: CalendarIntake[] = [
-    // Example entries (edit these to your real schedule)
-    {
-      id: "manual-1",
-      ticketNumber: "VR-0001",
-      vrNumber: "0001",
-      scheduledDate: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-      scheduledTimeWindow: "8AM-12PM",
-      estimatedWeight: 18.5,
-      client: { companyName: "Vanguard (Manual)", accountNumber: "" },
-      status: "scheduled",
-      deliveryType: "ssw_pickup",
-      wasteType: "vanguard",
-    },
+    { id: "vr-121125-109", ticketNumber: "VR121125-109", vrNumber: "121125-109", scheduledDate: date(11), scheduledTimeWindow: "11:00-14:00", eta: "12:00", estimatedWeight: 0, client: { companyName: "Vanguard Renewables", accountNumber: "" }, statusTag: "arrived", status: "scheduled", deliveryType: "client_delivery", wasteType: "off-spec pet food" },
+    { id: "vr-121125-110", ticketNumber: "VR121125-110", vrNumber: "121125-110", scheduledDate: date(11), scheduledTimeWindow: "11:00-14:00", eta: "13:00", estimatedWeight: 0, client: { companyName: "Vanguard Renewables", accountNumber: "" }, statusTag: "arrived", status: "scheduled", deliveryType: "client_delivery", wasteType: "off-spec pet food" },
+
+    { id: "vr-121225-98", ticketNumber: "VR121225-98", vrNumber: "121225-98", scheduledDate: date(12), scheduledTimeWindow: "11:00-14:30", estimatedWeight: 0, client: { companyName: "Vanguard Renewables", accountNumber: "" }, statusTag: "arrived", status: "scheduled", deliveryType: "client_delivery", wasteType: "off-spec pet food" },
+    { id: "vr-121225-99", ticketNumber: "VR121225-99", vrNumber: "121225-99", scheduledDate: date(12), scheduledTimeWindow: "11:00-14:30", estimatedWeight: 0, client: { companyName: "Vanguard Renewables", accountNumber: "" }, statusTag: "arrived", status: "scheduled", deliveryType: "client_delivery", wasteType: "off-spec pet food" },
+
+    { id: "vr-121525-49", ticketNumber: "VR121525-49", vrNumber: "121525-49", scheduledDate: date(15), scheduledTimeWindow: "06:00-14:30", estimatedWeight: 0, client: { companyName: "Vanguard Renewables", accountNumber: "" }, statusTag: "arrived", status: "scheduled", deliveryType: "client_delivery", wasteType: "off-spec pet food" },
+
+    // VR121525-50 had delays and moved; original date 12/15, ultimately delivered 12/17 ~15:00
+    { id: "vr-121525-50", ticketNumber: "VR121525-50", vrNumber: "121525-50", scheduledDate: date(17), scheduledTimeWindow: "06:00-14:30", eta: "15:00", note: "Delayed from 12/15 (tire/late) → moved to 12/17", estimatedWeight: 0, client: { companyName: "Vanguard Renewables", accountNumber: "" }, statusTag: "moved", status: "scheduled", deliveryType: "client_delivery", wasteType: "off-spec pet food" },
+
+    { id: "vr-121025-117", ticketNumber: "VR121025-117", vrNumber: "121025-117", scheduledDate: date(16), scheduledTimeWindow: "06:00-14:30", estimatedWeight: 0, client: { companyName: "Vanguard Renewables", accountNumber: "" }, statusTag: "arrived", status: "scheduled", deliveryType: "client_delivery", wasteType: "off-spec pet food" },
+    { id: "vr-121625-45", ticketNumber: "VR121625-45", vrNumber: "121625-45", scheduledDate: date(16), scheduledTimeWindow: "06:00-14:30", eta: "14:20", note: "Arrived ~14:55 per update", estimatedWeight: 0, client: { companyName: "Vanguard Renewables", accountNumber: "" }, statusTag: "arrived", status: "scheduled", deliveryType: "client_delivery", wasteType: "off-spec pet food" },
+
+    { id: "vr-121725-41", ticketNumber: "VR121725-41", vrNumber: "121725-41", scheduledDate: date(17), scheduledTimeWindow: "06:00-14:30", estimatedWeight: 0, client: { companyName: "Vanguard Renewables", accountNumber: "" }, statusTag: "scheduled", status: "scheduled", deliveryType: "client_delivery", wasteType: "off-spec pet food" },
+    { id: "vr-121725-72", ticketNumber: "VR121725-72", vrNumber: "121725-72", scheduledDate: date(17), scheduledTimeWindow: "06:00-14:30", estimatedWeight: 0, client: { companyName: "Vanguard Renewables", accountNumber: "" }, statusTag: "scheduled", status: "scheduled", deliveryType: "client_delivery", wasteType: "off-spec pet food" },
+    { id: "vr-121825-74", ticketNumber: "VR121825-74", vrNumber: "121825-74", scheduledDate: date(18), scheduledTimeWindow: "06:00-14:30", estimatedWeight: 0, client: { companyName: "Vanguard Renewables", accountNumber: "" }, statusTag: "scheduled", status: "scheduled", deliveryType: "client_delivery", wasteType: "off-spec pet food" },
   ];
 
+  const todayIntakes = calendarIntakes.filter((i) => isSameDay(new Date(i.scheduledDate), now));
+  const upcomingIntakes = calendarIntakes.filter((i) => new Date(i.scheduledDate) > now).sort((a, b) => +new Date(a.scheduledDate) - +new Date(b.scheduledDate));
+  const weekIntakes = calendarIntakes.filter((i) => inRange(new Date(i.scheduledDate), startOfWeek, endOfWeek)).sort((a, b) => +new Date(a.scheduledDate) - +new Date(b.scheduledDate));
+
   return {
-    weekIntakes: calendarIntakes,
-    upcomingIntakes: calendarIntakes,
-    todayIntakes: calendarIntakes,
+    weekIntakes,
+    upcomingIntakes,
+    todayIntakes,
     calendarIntakes,
     startOfWeek,
   };
