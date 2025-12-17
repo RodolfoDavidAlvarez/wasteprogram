@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Truck, Package, Weight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Truck, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -200,9 +200,7 @@ export function Calendar({ intakes = [] }: CalendarProps) {
                                 <div className={`inline-flex rounded px-1.5 py-0.5 text-[9px] font-bold ${pill.className}`}>{pill.label}</div>
                               ) : null;
                             })()}
-                            <div className="truncate opacity-80 text-[10px]">
-                              {intake.estimatedWeight > 0 ? `${intake.estimatedWeight.toFixed(1)} tons` : "TBD tons"}
-                            </div>
+                            {/* Intentionally omit weight/tons in public view */}
                           </div>
                         </Link>
                       ))}
@@ -278,12 +276,7 @@ export function Calendar({ intakes = [] }: CalendarProps) {
                           )}
                           {intake.scheduledTimeWindow && <p className="text-sm text-gray-500 mt-1">{intake.scheduledTimeWindow}</p>}
                         </div>
-                        <div className="text-right">
-                          <div className="flex items-center text-gray-700">
-                            <Weight className="h-4 w-4 mr-1" />
-                            <span className="font-semibold">{intake.estimatedWeight.toFixed(1)} tons</span>
-                          </div>
-                        </div>
+                        {/* Intentionally omit weight/tons in public view */}
                       </div>
                     </div>
                   </Link>
@@ -295,9 +288,7 @@ export function Calendar({ intakes = [] }: CalendarProps) {
                   <span className="font-semibold text-emerald-900">Total for Day:</span>
                   <div className="flex items-center">
                     <Package className="h-5 w-5 mr-2 text-emerald-600" />
-                    <span className="text-lg font-bold text-emerald-600">
-                      {intakesByDay[selectedDay].reduce((sum, i) => sum + i.estimatedWeight, 0).toFixed(1)} tons
-                    </span>
+                    <span className="text-sm font-semibold text-emerald-900">VR loads: {intakesByDay[selectedDay].length}</span>
                   </div>
                 </div>
               </div>

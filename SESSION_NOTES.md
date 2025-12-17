@@ -1,5 +1,54 @@
 # Session Notes - Waste Diversion App
 
+## 2025-12-17 - Gmail MCP Working + Calendar Updated with All VR Numbers
+
+### What We Did
+- Confirmed dual Gmail MCP setup working (both Better Systems AI + Soil Seed & Water)
+- Enabled Gmail API in Google Cloud Console for Soil Seed & Water project
+- Extracted all VR numbers from Casey Tucker emails (Vanguard Renewables)
+- Updated public schedule calendar with complete delivery data
+
+### VR Numbers Extracted & Added to Calendar
+
+**Nestle Dog Food Loads (11 total - Original batch):**
+| Date | VR Number | Status |
+|------|-----------|--------|
+| Thu 12/11 | VR121125-109, VR121125-110 | Delivered |
+| Fri 12/12 | VR121225-98, VR121225-99 | Delivered |
+| Mon 12/15 | VR121525-49 | Delivered |
+| Mon 12/15 | VR121525-50 | Delayed → Delivered 12/17 |
+| Tue 12/16 | VR121025-117, VR121625-45 | Delivered |
+| Wed 12/17 | VR121725-41, VR121725-72 | Delivered |
+| Thu 12/18 | VR121825-74 | Scheduled |
+
+**Tyson Tolleson Load (Separate):**
+| Date | VR Number | Status |
+|------|-----------|--------|
+| Thu 12/18 | VR121825-90 | Scheduled |
+
+**12 Additional Dog Food Loads (VR numbers pending from Casey):**
+| Date | Loads | Status |
+|------|-------|--------|
+| Thu 12/18 | 1 | Scheduled (VR pending) |
+| Fri 12/19 | 2 | Scheduled (VR pending) |
+| Mon 12/22 | 3 | Scheduled (VR pending) |
+| Tue 12/23 | 2 | Scheduled (VR pending) |
+| Wed 12/24 | 1 | Scheduled (VR pending) - Christmas Eve |
+| Mon 12/29 | 3 | Scheduled (VR pending) |
+
+### Key Changes
+- `/src/app/schedule/page.tsx` - Updated `getManualSchedule()` with all VR data
+- Added Tyson Tolleson load (separate from Nestle)
+- Added 12 pending loads with placeholder tickets until Casey sends VR numbers
+- Status tags: "arrived" for completed, "moved" for delayed, "scheduled" for upcoming
+
+### Closed Days (per email confirmation)
+- Christmas Day: Dec 25, 2025
+- Dec 30 - Jan 2: Closed
+- Reopening: Monday, Jan 5, 2026
+
+---
+
 ## 2025-12-09 - Initial Build Complete
 
 ### What We Did

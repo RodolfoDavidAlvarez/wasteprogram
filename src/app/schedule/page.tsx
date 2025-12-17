@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs";
 import { Calendar } from "@/components/schedule/Calendar";
 import { prisma } from "@/lib/prisma";
-import { formatDate, formatWeight, INTAKE_STATUSES } from "@/lib/utils";
+import { formatDate, INTAKE_STATUSES } from "@/lib/utils";
 import { Calendar as CalendarIcon, Truck, MapPin, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -59,34 +59,393 @@ function getManualSchedule(): {
 
   // TODO: Replace this with DB-backed schedule once production DATABASE_URL is configured.
   // For now, keep this list updated manually (VR numbers + tons).
+  // Last updated: 2025-12-17 by Claude Code (extracted from Casey Tucker emails)
   const y = 2025;
   const m = 11; // December (0-indexed)
   const date = (day: number) => new Date(y, m, day);
 
-  // VR numbers from email thread (Casey Tucker / Vanguard)
+  // =============================================================================
+  // NESTLE DOG FOOD LOADS (Original 9 + 2 additional = 11 loads)
+  // Source: Casey Tucker <ctucker@vanguardrenewables.com>
+  // Material: Off-spec dog/cat food (Salmonella-contaminated), bags on slip sheets
+  // =============================================================================
   const calendarIntakes: CalendarIntake[] = [
-    { id: "vr-121125-109", ticketNumber: "VR121125-109", vrNumber: "121125-109", scheduledDate: date(11), scheduledTimeWindow: "11:00-14:00", eta: "12:00", estimatedWeight: 0, client: { companyName: "Vanguard Renewables", accountNumber: "" }, statusTag: "arrived", status: "scheduled", deliveryType: "client_delivery", wasteType: "off-spec pet food" },
-    { id: "vr-121125-110", ticketNumber: "VR121125-110", vrNumber: "121125-110", scheduledDate: date(11), scheduledTimeWindow: "11:00-14:00", eta: "13:00", estimatedWeight: 0, client: { companyName: "Vanguard Renewables", accountNumber: "" }, statusTag: "arrived", status: "scheduled", deliveryType: "client_delivery", wasteType: "off-spec pet food" },
+    // Thursday 12/11 - 2 loads (DELIVERED)
+    {
+      id: "vr-121125-109",
+      ticketNumber: "VR121125-109",
+      vrNumber: "121125-109",
+      scheduledDate: date(11),
+      scheduledTimeWindow: "11:00-14:00",
+      eta: "12:00",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      statusTag: "arrived",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
+    {
+      id: "vr-121125-110",
+      ticketNumber: "VR121125-110",
+      vrNumber: "121125-110",
+      scheduledDate: date(11),
+      scheduledTimeWindow: "11:00-14:00",
+      eta: "13:00",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      statusTag: "arrived",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
 
-    { id: "vr-121225-98", ticketNumber: "VR121225-98", vrNumber: "121225-98", scheduledDate: date(12), scheduledTimeWindow: "11:00-14:30", estimatedWeight: 0, client: { companyName: "Vanguard Renewables", accountNumber: "" }, statusTag: "arrived", status: "scheduled", deliveryType: "client_delivery", wasteType: "off-spec pet food" },
-    { id: "vr-121225-99", ticketNumber: "VR121225-99", vrNumber: "121225-99", scheduledDate: date(12), scheduledTimeWindow: "11:00-14:30", estimatedWeight: 0, client: { companyName: "Vanguard Renewables", accountNumber: "" }, statusTag: "arrived", status: "scheduled", deliveryType: "client_delivery", wasteType: "off-spec pet food" },
+    // Friday 12/12 - 2 loads (DELIVERED)
+    {
+      id: "vr-121225-98",
+      ticketNumber: "VR121225-98",
+      vrNumber: "121225-98",
+      scheduledDate: date(12),
+      scheduledTimeWindow: "11:00-14:30",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      statusTag: "arrived",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
+    {
+      id: "vr-121225-99",
+      ticketNumber: "VR121225-99",
+      vrNumber: "121225-99",
+      scheduledDate: date(12),
+      scheduledTimeWindow: "11:00-14:30",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      statusTag: "arrived",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
 
-    { id: "vr-121525-49", ticketNumber: "VR121525-49", vrNumber: "121525-49", scheduledDate: date(15), scheduledTimeWindow: "06:00-14:30", estimatedWeight: 0, client: { companyName: "Vanguard Renewables", accountNumber: "" }, statusTag: "arrived", status: "scheduled", deliveryType: "client_delivery", wasteType: "off-spec pet food" },
+    // Monday 12/15 - 1 load delivered, 1 delayed (DELIVERED + MOVED)
+    {
+      id: "vr-121525-49",
+      ticketNumber: "VR121525-49",
+      vrNumber: "121525-49",
+      scheduledDate: date(15),
+      scheduledTimeWindow: "06:00-14:30",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      statusTag: "arrived",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
 
-    // VR121525-50 had delays and moved; original date 12/15, ultimately delivered 12/17 ~15:00
-    { id: "vr-121525-50", ticketNumber: "VR121525-50", vrNumber: "121525-50", scheduledDate: date(17), scheduledTimeWindow: "06:00-14:30", eta: "15:00", note: "Delayed from 12/15 (tire/late) → moved to 12/17", estimatedWeight: 0, client: { companyName: "Vanguard Renewables", accountNumber: "" }, statusTag: "moved", status: "scheduled", deliveryType: "client_delivery", wasteType: "off-spec pet food" },
+    // Tuesday 12/16 - 2 loads (DELIVERED)
+    {
+      id: "vr-121025-117",
+      ticketNumber: "VR121025-117",
+      vrNumber: "121025-117",
+      scheduledDate: date(16),
+      scheduledTimeWindow: "06:00-14:30",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      statusTag: "arrived",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
+    {
+      id: "vr-121625-45",
+      ticketNumber: "VR121625-45",
+      vrNumber: "121625-45",
+      scheduledDate: date(16),
+      scheduledTimeWindow: "06:00-14:30",
+      eta: "14:20",
+      note: "Arrived ~14:55",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      statusTag: "arrived",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
 
-    { id: "vr-121025-117", ticketNumber: "VR121025-117", vrNumber: "121025-117", scheduledDate: date(16), scheduledTimeWindow: "06:00-14:30", estimatedWeight: 0, client: { companyName: "Vanguard Renewables", accountNumber: "" }, statusTag: "arrived", status: "scheduled", deliveryType: "client_delivery", wasteType: "off-spec pet food" },
-    { id: "vr-121625-45", ticketNumber: "VR121625-45", vrNumber: "121625-45", scheduledDate: date(16), scheduledTimeWindow: "06:00-14:30", eta: "14:20", note: "Arrived ~14:55 per update", estimatedWeight: 0, client: { companyName: "Vanguard Renewables", accountNumber: "" }, statusTag: "arrived", status: "scheduled", deliveryType: "client_delivery", wasteType: "off-spec pet food" },
+    // Wednesday 12/17 - 3 loads (1 original + 1 additional + 1 moved from 12/15)
+    {
+      id: "vr-121725-41",
+      ticketNumber: "VR121725-41",
+      vrNumber: "121725-41",
+      scheduledDate: date(17),
+      scheduledTimeWindow: "06:00-14:30",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      statusTag: "arrived",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
+    {
+      id: "vr-121725-72",
+      ticketNumber: "VR121725-72",
+      vrNumber: "121725-72",
+      scheduledDate: date(17),
+      scheduledTimeWindow: "06:00-14:30",
+      note: "Additional load (making 11 total)",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      statusTag: "arrived",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
+    // VR121525-50 - Delayed from 12/15, delivered 12/17 ~15:00
+    {
+      id: "vr-121525-50",
+      ticketNumber: "VR121525-50",
+      vrNumber: "121525-50",
+      scheduledDate: date(17),
+      scheduledTimeWindow: "06:00-14:30",
+      eta: "15:00",
+      note: "Delayed from 12/15 → delivered 12/17",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      statusTag: "moved",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
 
-    { id: "vr-121725-41", ticketNumber: "VR121725-41", vrNumber: "121725-41", scheduledDate: date(17), scheduledTimeWindow: "06:00-14:30", estimatedWeight: 0, client: { companyName: "Vanguard Renewables", accountNumber: "" }, statusTag: "scheduled", status: "scheduled", deliveryType: "client_delivery", wasteType: "off-spec pet food" },
-    { id: "vr-121725-72", ticketNumber: "VR121725-72", vrNumber: "121725-72", scheduledDate: date(17), scheduledTimeWindow: "06:00-14:30", estimatedWeight: 0, client: { companyName: "Vanguard Renewables", accountNumber: "" }, statusTag: "scheduled", status: "scheduled", deliveryType: "client_delivery", wasteType: "off-spec pet food" },
-    { id: "vr-121825-74", ticketNumber: "VR121825-74", vrNumber: "121825-74", scheduledDate: date(18), scheduledTimeWindow: "06:00-14:30", estimatedWeight: 0, client: { companyName: "Vanguard Renewables", accountNumber: "" }, statusTag: "scheduled", status: "scheduled", deliveryType: "client_delivery", wasteType: "off-spec pet food" },
+    // Thursday 12/18 - 1 Nestle load (additional)
+    {
+      id: "vr-121825-74",
+      ticketNumber: "VR121825-74",
+      vrNumber: "121825-74",
+      scheduledDate: date(18),
+      scheduledTimeWindow: "06:00-14:30",
+      note: "Additional load (making 11 total)",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      statusTag: "scheduled",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
+
+    // =============================================================================
+    // TYSON TOLLESON LOAD (Separate from Nestle project)
+    // Source: Casey Tucker email 12/17/2025
+    // =============================================================================
+    {
+      id: "vr-121825-90",
+      ticketNumber: "VR121825-90",
+      vrNumber: "121825-90",
+      scheduledDate: date(18),
+      scheduledTimeWindow: "06:00-14:30",
+      note: "Tyson Tolleson, AZ - separate from Nestle loads",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Tyson)", accountNumber: "" },
+      statusTag: "scheduled",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "food waste",
+    },
+
+    // =============================================================================
+    // 12 ADDITIONAL DOG FOOD LOADS (New batch - VR numbers pending from Casey)
+    // Confirmed schedule per email 12/17/2025
+    // Casey will send VR numbers once shipper confirms
+    // =============================================================================
+    // Thursday 12/18 - 1 additional load (VR TBD)
+    {
+      id: "pending-1218-1",
+      ticketNumber: "PENDING-1218-1",
+      vrNumber: null,
+      scheduledDate: date(18),
+      scheduledTimeWindow: "06:00-14:30",
+      note: "Additional dog food load #1 of 12 - VR# pending",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      statusTag: "scheduled",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
+
+    // Friday 12/19 - 2 loads (VR TBD)
+    {
+      id: "pending-1219-1",
+      ticketNumber: "PENDING-1219-1",
+      vrNumber: null,
+      scheduledDate: date(19),
+      scheduledTimeWindow: "06:00-14:30",
+      note: "Additional dog food load #2 of 12 - VR# pending",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      statusTag: "scheduled",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
+    {
+      id: "pending-1219-2",
+      ticketNumber: "PENDING-1219-2",
+      vrNumber: null,
+      scheduledDate: date(19),
+      scheduledTimeWindow: "06:00-14:30",
+      note: "Additional dog food load #3 of 12 - VR# pending",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      statusTag: "scheduled",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
+
+    // Monday 12/22 - 3 loads (VR TBD)
+    {
+      id: "pending-1222-1",
+      ticketNumber: "PENDING-1222-1",
+      vrNumber: null,
+      scheduledDate: date(22),
+      scheduledTimeWindow: "06:00-14:30",
+      note: "Additional dog food load #4 of 12 - VR# pending",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      statusTag: "scheduled",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
+    {
+      id: "pending-1222-2",
+      ticketNumber: "PENDING-1222-2",
+      vrNumber: null,
+      scheduledDate: date(22),
+      scheduledTimeWindow: "06:00-14:30",
+      note: "Additional dog food load #5 of 12 - VR# pending",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      statusTag: "scheduled",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
+    {
+      id: "pending-1222-3",
+      ticketNumber: "PENDING-1222-3",
+      vrNumber: null,
+      scheduledDate: date(22),
+      scheduledTimeWindow: "06:00-14:30",
+      note: "Additional dog food load #6 of 12 - VR# pending",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      statusTag: "scheduled",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
+
+    // Tuesday 12/23 - 2 loads (VR TBD)
+    {
+      id: "pending-1223-1",
+      ticketNumber: "PENDING-1223-1",
+      vrNumber: null,
+      scheduledDate: date(23),
+      scheduledTimeWindow: "06:00-14:30",
+      note: "Additional dog food load #7 of 12 - VR# pending",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      statusTag: "scheduled",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
+    {
+      id: "pending-1223-2",
+      ticketNumber: "PENDING-1223-2",
+      vrNumber: null,
+      scheduledDate: date(23),
+      scheduledTimeWindow: "06:00-14:30",
+      note: "Additional dog food load #8 of 12 - VR# pending",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      statusTag: "scheduled",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
+
+    // Wednesday 12/24 (Christmas Eve) - 1 load (VR TBD)
+    {
+      id: "pending-1224-1",
+      ticketNumber: "PENDING-1224-1",
+      vrNumber: null,
+      scheduledDate: date(24),
+      scheduledTimeWindow: "06:00-14:30",
+      note: "Additional dog food load #9 of 12 - VR# pending (Christmas Eve)",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      statusTag: "scheduled",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
+
+    // Monday 12/29 - 3 loads (VR TBD)
+    {
+      id: "pending-1229-1",
+      ticketNumber: "PENDING-1229-1",
+      vrNumber: null,
+      scheduledDate: date(29),
+      scheduledTimeWindow: "06:00-14:30",
+      note: "Additional dog food load #10 of 12 - VR# pending",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      statusTag: "scheduled",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
+    {
+      id: "pending-1229-2",
+      ticketNumber: "PENDING-1229-2",
+      vrNumber: null,
+      scheduledDate: date(29),
+      scheduledTimeWindow: "06:00-14:30",
+      note: "Additional dog food load #11 of 12 - VR# pending",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      statusTag: "scheduled",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
+    {
+      id: "pending-1229-3",
+      ticketNumber: "PENDING-1229-3",
+      vrNumber: null,
+      scheduledDate: date(29),
+      scheduledTimeWindow: "06:00-14:30",
+      note: "Additional dog food load #12 of 12 - VR# pending",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      statusTag: "scheduled",
+      status: "scheduled",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
   ];
 
   const todayIntakes = calendarIntakes.filter((i) => isSameDay(new Date(i.scheduledDate), now));
-  const upcomingIntakes = calendarIntakes.filter((i) => new Date(i.scheduledDate) > now).sort((a, b) => +new Date(a.scheduledDate) - +new Date(b.scheduledDate));
-  const weekIntakes = calendarIntakes.filter((i) => inRange(new Date(i.scheduledDate), startOfWeek, endOfWeek)).sort((a, b) => +new Date(a.scheduledDate) - +new Date(b.scheduledDate));
+  const upcomingIntakes = calendarIntakes
+    .filter((i) => new Date(i.scheduledDate) > now)
+    .sort((a, b) => +new Date(a.scheduledDate) - +new Date(b.scheduledDate));
+  const weekIntakes = calendarIntakes
+    .filter((i) => inRange(new Date(i.scheduledDate), startOfWeek, endOfWeek))
+    .sort((a, b) => +new Date(a.scheduledDate) - +new Date(b.scheduledDate));
 
   return {
     weekIntakes,
@@ -371,10 +730,7 @@ export default async function SchedulePage() {
                         </div>
                       )}
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold">{formatWeight(intake.estimatedWeight)}</p>
-                      <p className="text-xs text-gray-500">{intake.wasteType ?? ""}</p>
-                    </div>
+                    {/* Intentionally omit weight/tons in public view */}
                   </div>
                 </div>
               </Link>
@@ -420,10 +776,7 @@ export default async function SchedulePage() {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold">{formatWeight(intake.estimatedWeight)}</p>
-                    {intake.scheduledTimeWindow && <p className="text-xs text-gray-500">{intake.scheduledTimeWindow}</p>}
-                  </div>
+                  {/* Intentionally omit weight/tons in public view */}
                 </div>
               </Link>
             ))}
