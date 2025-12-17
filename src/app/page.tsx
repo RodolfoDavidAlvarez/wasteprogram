@@ -4,6 +4,8 @@ import { RecentIntakes } from "@/components/dashboard/RecentIntakes"
 import { WasteChart } from "@/components/dashboard/WasteChart"
 import { UpcomingSchedule } from "@/components/dashboard/UpcomingSchedule"
 import { EnvironmentalImpact } from "@/components/dashboard/EnvironmentalImpact"
+import { Tabs } from "@/components/ui/tabs"
+import { Calendar } from "@/components/schedule/Calendar"
 import { prisma } from "@/lib/prisma"
 import {
   calculateCO2Avoided,
@@ -133,6 +135,26 @@ async function getDashboardData() {
     value: item._sum.actualWeight || 0,
   }))
 
+  // Get calendar intakes (this month and next)
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0)
+
+  const calendarIntakes = await prisma.wasteIntake.findMany({
+    where: {
+      status: { in: ["approved", "scheduled", "in_transit"] },
+      scheduledDate: {
+        gte: startOfMonth,
+        lte: endOfMonth,
+      },
+    },
+    include: {
+      client: {
+        select: { companyName: true },
+      },
+    },
+    orderBy: { scheduledDate: "asc" },
+  })
+
   // Calculate environmental impact
   const totalWasteDiverted = ytdIntakes._sum.actualWeight || 0
   const co2Avoided = calculateCO2Avoided(totalWasteDiverted)
@@ -169,6 +191,7 @@ async function getDashboardData() {
       scheduledTimeWindow: item.scheduledTimeWindow,
       pickupAddress: item.pickupAddress,
     })),
+    calendarIntakes,
     monthlyData,
     wasteTypeData: wasteTypeData.length > 0 ? wasteTypeData : [{ name: "No Data", value: 0 }],
     environmentalImpact: {
@@ -244,6 +267,27 @@ export default async function DashboardPage() {
           <RecentIntakes intakes={data.recentIntakes} />
           <UpcomingSchedule items={data.upcomingSchedule} />
         </div>
+
+        {/* Calendar & Details */}
+        <Tabs
+          tabs={[
+            {
+              label: "Calendar",
+              value: "calendar",
+              content: <Calendar intakes={data.calendarIntakes} />,
+            },
+            {
+              label: "Details",
+              value: "details",
+              content: (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <RecentIntakes intakes={data.recentIntakes} />
+                  <UpcomingSchedule items={data.upcomingSchedule} />
+                </div>
+              ),
+            },
+          ]}
+        />
       </div>
     </div>
   )
