@@ -6,8 +6,38 @@ import {
   calculateCompostProduced,
 } from "@/lib/utils"
 
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
+
 export async function GET() {
   try {
+    // During Vercel builds or first-time deploys, env vars may not be set yet.
+    // Return a safe empty payload instead of crashing the build/runtime.
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({
+        stats: {
+          ytdWasteDiverted: 0,
+          ytdRevenue: 0,
+          ytdIntakeCount: 0,
+          monthWasteDiverted: 0,
+          monthRevenue: 0,
+          monthIntakeCount: 0,
+          pendingIntakes: 0,
+          activeClients: 0,
+        },
+        recentIntakes: [],
+        upcomingSchedule: [],
+        monthlyData: [],
+        wasteTypeData: [],
+        environmentalImpact: {
+          totalWasteDiverted: 0,
+          co2Avoided: 0,
+          landfillSpaceSaved: 0,
+          compostProduced: 0,
+        },
+      })
+    }
+
     const now = new Date()
     const startOfYear = new Date(now.getFullYear(), 0, 1)
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)

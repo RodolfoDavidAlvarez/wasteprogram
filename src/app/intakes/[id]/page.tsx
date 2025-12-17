@@ -1,32 +1,14 @@
-import { notFound } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { prisma } from "@/lib/prisma"
-import {
-  formatDate,
-  formatWeight,
-  INTAKE_STATUSES,
-  WASTE_TYPES,
-  PACKAGING_TYPES,
-} from "@/lib/utils"
-import {
-  ArrowLeft,
-  Building2,
-  Package,
-  Truck,
-  Calendar,
-  AlertTriangle,
-  Edit,
-  Printer,
-  FileText,
-  Weight,
-  MapPin,
-} from "lucide-react"
-import { SubmitBOLButton } from "@/components/intakes/SubmitBOLButton"
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { prisma } from "@/lib/prisma";
+import { formatDate, formatWeight, INTAKE_STATUSES, WASTE_TYPES, PACKAGING_TYPES } from "@/lib/utils";
+import { ArrowLeft, Building2, Package, Truck, Calendar, AlertTriangle, Edit, Printer, FileText, Weight, MapPin } from "lucide-react";
+import { SubmitBOLButton } from "@/components/intakes/SubmitBOLButton";
 
 interface IntakeDetailPageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }
 
 async function getIntake(id: string) {
@@ -36,20 +18,20 @@ async function getIntake(id: string) {
       client: true,
       contaminationReports: true,
     },
-  })
+  });
 }
 
 export default async function IntakeDetailPage({ params }: IntakeDetailPageProps) {
-  const { id } = await params
-  const intake = await getIntake(id)
+  const { id } = await params;
+  const intake = await getIntake(id);
 
   if (!intake) {
-    notFound()
+    notFound();
   }
 
-  const statusConfig = INTAKE_STATUSES.find((s) => s.value === intake.status)
-  const wasteTypeLabel = WASTE_TYPES.find((t) => t.value === intake.wasteType)?.label || intake.wasteType
-  const packagingLabel = PACKAGING_TYPES.find((p) => p.value === intake.packagingType)?.label || intake.packagingType
+  const statusConfig = INTAKE_STATUSES.find((s) => s.value === intake.status);
+  const wasteTypeLabel = WASTE_TYPES.find((t) => t.value === intake.wasteType)?.label || intake.wasteType;
+  const packagingLabel = PACKAGING_TYPES.find((p) => p.value === intake.packagingType)?.label || intake.packagingType;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -112,9 +94,7 @@ export default async function IntakeDetailPage({ params }: IntakeDetailPageProps
                 <span className="text-xs">Scheduled</span>
               </div>
               <p className="text-sm font-semibold">{formatDate(intake.scheduledDate)}</p>
-              {intake.scheduledTimeWindow && (
-                <p className="text-xs text-gray-500">{intake.scheduledTimeWindow}</p>
-              )}
+              {intake.scheduledTimeWindow && <p className="text-xs text-gray-500">{intake.scheduledTimeWindow}</p>}
             </CardContent>
           </Card>
         </div>
@@ -198,9 +178,7 @@ export default async function IntakeDetailPage({ params }: IntakeDetailPageProps
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-medium text-gray-500">Delivery Type</label>
-                  <p className="text-sm">
-                    {intake.deliveryType === "client_delivery" ? "Client Delivery" : "SSW Pickup"}
-                  </p>
+                  <p className="text-sm">{intake.deliveryType === "client_delivery" ? "Client Delivery" : "SSW Pickup"}</p>
                 </div>
                 {intake.vehicleType && (
                   <div>
@@ -256,5 +234,5 @@ export default async function IntakeDetailPage({ params }: IntakeDetailPageProps
         </div>
       </div>
     </div>
-  )
+  );
 }
