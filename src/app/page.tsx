@@ -1,101 +1,250 @@
-import Image from "next/image";
+import { Header } from "@/components/layout/Header"
+import { StatsCard } from "@/components/dashboard/StatsCard"
+import { RecentIntakes } from "@/components/dashboard/RecentIntakes"
+import { WasteChart } from "@/components/dashboard/WasteChart"
+import { UpcomingSchedule } from "@/components/dashboard/UpcomingSchedule"
+import { EnvironmentalImpact } from "@/components/dashboard/EnvironmentalImpact"
+import { prisma } from "@/lib/prisma"
+import {
+  calculateCO2Avoided,
+  calculateLandfillSpaceSaved,
+  calculateCompostProduced,
+} from "@/lib/utils"
 
-export default function Home() {
+async function getDashboardData() {
+  const now = new Date()
+  const startOfYear = new Date(now.getFullYear(), 0, 1)
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+
+  // Get YTD stats
+  const ytdIntakes = await prisma.wasteIntake.aggregate({
+    where: {
+      status: "received",
+      receivedAt: {
+        gte: startOfYear,
+      },
+    },
+    _sum: {
+      actualWeight: true,
+      totalCharge: true,
+    },
+    _count: true,
+  })
+
+  // Get month stats
+  const monthIntakes = await prisma.wasteIntake.aggregate({
+    where: {
+      status: "received",
+      receivedAt: {
+        gte: startOfMonth,
+      },
+    },
+    _sum: {
+      actualWeight: true,
+      totalCharge: true,
+    },
+    _count: true,
+  })
+
+  // Get pending intakes count
+  const pendingCount = await prisma.wasteIntake.count({
+    where: {
+      status: { in: ["pending", "approved", "scheduled"] },
+    },
+  })
+
+  // Get active clients count
+  const activeClientsCount = await prisma.client.count({
+    where: { status: "active" },
+  })
+
+  // Get recent intakes
+  const recentIntakes = await prisma.wasteIntake.findMany({
+    take: 5,
+    orderBy: { createdAt: "desc" },
+    include: {
+      client: {
+        select: { companyName: true },
+      },
+    },
+  })
+
+  // Get upcoming schedule (next 7 days)
+  const upcomingSchedule = await prisma.wasteIntake.findMany({
+    where: {
+      status: { in: ["approved", "scheduled"] },
+      scheduledDate: {
+        gte: now,
+        lte: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
+      },
+    },
+    orderBy: { scheduledDate: "asc" },
+    take: 5,
+    include: {
+      client: {
+        select: { companyName: true },
+      },
+    },
+  })
+
+  // Get monthly data for charts (last 6 months)
+  const monthlyData = []
+  for (let i = 5; i >= 0; i--) {
+    const monthStart = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() - i + 1, 0)
+
+    const monthData = await prisma.wasteIntake.aggregate({
+      where: {
+        status: "received",
+        receivedAt: {
+          gte: monthStart,
+          lte: monthEnd,
+        },
+      },
+      _sum: {
+        actualWeight: true,
+        totalCharge: true,
+      },
+    })
+
+    monthlyData.push({
+      month: monthStart.toLocaleDateString("en-US", { month: "short" }),
+      tons: monthData._sum.actualWeight || 0,
+      revenue: monthData._sum.totalCharge || 0,
+    })
+  }
+
+  // Get waste by type
+  const wasteByType = await prisma.wasteIntake.groupBy({
+    by: ["wasteType"],
+    where: {
+      status: "received",
+      receivedAt: {
+        gte: startOfYear,
+      },
+    },
+    _sum: {
+      actualWeight: true,
+    },
+  })
+
+  const wasteTypeData = wasteByType.map((item) => ({
+    name: item.wasteType.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+    value: item._sum.actualWeight || 0,
+  }))
+
+  // Calculate environmental impact
+  const totalWasteDiverted = ytdIntakes._sum.actualWeight || 0
+  const co2Avoided = calculateCO2Avoided(totalWasteDiverted)
+  const landfillSpaceSaved = calculateLandfillSpaceSaved(totalWasteDiverted)
+  const compostProduced = calculateCompostProduced(totalWasteDiverted)
+
+  return {
+    stats: {
+      ytdWasteDiverted: ytdIntakes._sum.actualWeight || 0,
+      ytdRevenue: ytdIntakes._sum.totalCharge || 0,
+      ytdIntakeCount: ytdIntakes._count || 0,
+      monthWasteDiverted: monthIntakes._sum.actualWeight || 0,
+      monthRevenue: monthIntakes._sum.totalCharge || 0,
+      monthIntakeCount: monthIntakes._count || 0,
+      pendingIntakes: pendingCount,
+      activeClients: activeClientsCount,
+    },
+    recentIntakes: recentIntakes.map((intake) => ({
+      id: intake.id,
+      ticketNumber: intake.ticketNumber,
+      clientName: intake.client.companyName,
+      wasteType: intake.wasteType,
+      estimatedWeight: intake.estimatedWeight,
+      actualWeight: intake.actualWeight,
+      status: intake.status,
+      scheduledDate: intake.scheduledDate,
+    })),
+    upcomingSchedule: upcomingSchedule.map((item) => ({
+      id: item.id,
+      ticketNumber: item.ticketNumber,
+      clientName: item.client.companyName,
+      deliveryType: item.deliveryType,
+      scheduledDate: item.scheduledDate,
+      scheduledTimeWindow: item.scheduledTimeWindow,
+      pickupAddress: item.pickupAddress,
+    })),
+    monthlyData,
+    wasteTypeData: wasteTypeData.length > 0 ? wasteTypeData : [{ name: "No Data", value: 0 }],
+    environmentalImpact: {
+      totalWasteDiverted,
+      co2Avoided,
+      landfillSpaceSaved,
+      compostProduced,
+    },
+  }
+}
+
+export default async function DashboardPage() {
+  const data = await getDashboardData()
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div>
+      <Header
+        title="Dashboard"
+        subtitle="Waste Diversion Program Overview"
+      />
+      <div className="p-6 space-y-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatsCard
+            title="Waste Diverted (YTD)"
+            value={`${data.stats.ytdWasteDiverted.toFixed(1)} tons`}
+            subtitle={`${data.stats.monthWasteDiverted.toFixed(1)} tons this month`}
+            iconName="truck"
+            trend={data.stats.monthWasteDiverted > 0 ? { value: 12, label: "vs last month" } : undefined}
+          />
+          <StatsCard
+            title="Tipping Revenue (YTD)"
+            value={`$${data.stats.ytdRevenue.toLocaleString()}`}
+            subtitle={`$${data.stats.monthRevenue.toLocaleString()} this month`}
+            iconName="dollar"
+            iconColor="text-blue-600"
+            iconBgColor="bg-blue-100"
+          />
+          <StatsCard
+            title="Active Clients"
+            value={data.stats.activeClients}
+            subtitle={`${data.stats.ytdIntakeCount} intakes YTD`}
+            iconName="users"
+            iconColor="text-purple-600"
+            iconBgColor="bg-purple-100"
+          />
+          <StatsCard
+            title="Pending Intakes"
+            value={data.stats.pendingIntakes}
+            subtitle="Awaiting processing"
+            iconName="clock"
+            iconColor="text-amber-600"
+            iconBgColor="bg-amber-100"
+          />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {/* Environmental Impact */}
+        <EnvironmentalImpact
+          totalWasteDiverted={data.environmentalImpact.totalWasteDiverted}
+          co2Avoided={data.environmentalImpact.co2Avoided}
+          landfillSpaceSaved={data.environmentalImpact.landfillSpaceSaved}
+          compostProduced={data.environmentalImpact.compostProduced}
+        />
+
+        {/* Charts */}
+        <WasteChart
+          monthlyData={data.monthlyData}
+          wasteTypeData={data.wasteTypeData}
+        />
+
+        {/* Recent Intakes & Schedule */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <RecentIntakes intakes={data.recentIntakes} />
+          <UpcomingSchedule items={data.upcomingSchedule} />
+        </div>
+      </div>
     </div>
-  );
+  )
 }

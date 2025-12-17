@@ -1,0 +1,332 @@
+// Waste Diversion App - Database Schema
+// SSW Waste Intake Tracking System
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Client/Account Management
+model Client {
+  id                  String   @id @default(cuid())
+  companyName         String
+  accountNumber       String   @unique
+  operationalContact  String
+  operationalEmail    String
+  operationalPhone    String
+  billingContact      String?
+  billingEmail        String?
+  billingPhone        String?
+  address             String
+  city                String
+  state               String
+  zipCode             String
+  contractReference   String?
+  tippingFeeRate      Float    @default(45.00) // $/ton default rate
+  notes               String?
+  status              String   @default("active") // active, inactive, suspended
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  intakes             WasteIntake[]
+  contracts           Contract[]
+  scaleTransactions   ScaleTransaction[]
+}
+
+// Contracts/Service Agreements
+model Contract {
+  id                String   @id @default(cuid())
+  clientId          String
+  client            Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  contractNumber    String   @unique
+  startDate         DateTime
+  endDate           DateTime?
+  tippingFeeRate    Float
+  wasteTypes        String   // JSON array of accepted waste types
+  terms             String?
+  status            String   @default("active") // active, expired, terminated
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// Waste Intake Request/Ticket
+model WasteIntake {
+  id                    String   @id @default(cuid())
+  ticketNumber          String   @unique
+  clientId              String
+  client                Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  // Waste Details
+  wasteType             String   // food_waste, green_waste, wood_chips, manure, brewery_grain, expired_produce, etc.
+  wasteDescription      String?
+  estimatedWeight       Float    // in tons
+  actualWeight          Float?   // recorded after receipt
+  packagingType         String   // loose, totes, pallets, bags, roll_off, tanker
+
+  // Logistics
+  deliveryType          String   // client_delivery, ssw_pickup
+  scheduledDate         DateTime
+  scheduledTimeWindow   String?  // e.g., "8AM-12PM"
+  confirmedDate         DateTime?
+  pickupAddress         String?
+  pickupCity            String?
+  pickupState           String?
+  pickupZip             String?
+  vehicleType           String?  // semi_trailer, roll_off_truck, pickup_truck, dump_truck
+  driverContact         String?
+  onSiteContact         String?
+  onSitePhone           String?
+
+  // Schedule Info
+  isRecurring           Boolean  @default(false)
+  recurringFrequency    String?  // weekly, bi_weekly, monthly
+
+  // Special Handling
+  temperatureRequirement String? // frozen, refrigerated, ambient
+  hasOdorConcerns       Boolean  @default(false)
+  hasLeakageConcerns    Boolean  @default(false)
+  equipmentNeeded       String?  // forklift, pallet_jack, etc.
+  specialInstructions   String?
+
+  // Compliance
+  contaminationCertified Boolean @default(false)
+  contaminationNotes    String?
+
+  // Status & Processing
+  status                String   @default("pending") // pending, approved, scheduled, in_transit, received, rejected, cancelled
+  approvedBy            String?
+  approvedAt            DateTime?
+  receivedAt            DateTime?
+  processingNote        String?
+  destinationSite       String?  // which composting site
+
+  // Contamination Inspection (post-receipt)
+  inspectionPassed      Boolean?
+  inspectionNotes       String?
+  contaminationFound    Boolean  @default(false)
+
+  // Billing
+  tippingFeeRate        Float?
+  totalCharge           Float?
+  invoiceId             String?
+  poNumber              String?
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  contaminationReports  ContaminationReport[]
+}
+
+// Contamination Tracking
+model ContaminationReport {
+  id              String      @id @default(cuid())
+  intakeId        String
+  intake          WasteIntake @relation(fields: [intakeId], references: [id], onDelete: Cascade)
+  contaminantType String      // plastic, glass, metal, stones, chemicals, treated_wood, hazardous, other
+  severity        String      // minor, moderate, severe
+  description     String
+  actionTaken     String?     // rejected, sorted, fee_adjusted
+  feeAdjustment   Float?
+  reportedBy      String
+  reportedAt      DateTime    @default(now())
+  photos          String?     // JSON array of photo URLs
+}
+
+// Waste Type Configuration
+model WasteTypeConfig {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  name            String
+  description     String?
+  category        String   // organic, green_waste, wood, manure, other
+  acceptedStatus  String   @default("accepted") // accepted, conditional, not_accepted
+  defaultRate     Float?
+  processingNotes String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// Daily Operations Summary
+model DailyOperations {
+  id                    String   @id @default(cuid())
+  date                  DateTime @unique
+  totalIntakes          Int      @default(0)
+  totalWeightReceived   Float    @default(0)
+  totalPickups          Int      @default(0)
+  missedPickups         Int      @default(0)
+  contaminationIncidents Int     @default(0)
+  tippingRevenue        Float    @default(0)
+  notes                 String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+// Environmental Impact Metrics
+model EnvironmentalMetrics {
+  id                    String   @id @default(cuid())
+  month                 Int
+  year                  Int
+  totalWasteDiverted    Float    @default(0) // tons
+  co2Avoided            Float    @default(0) // metric tons CO2e
+  landfillSpaceSaved    Float    @default(0) // cubic yards
+  compostProduced       Float    @default(0) // tons
+  methaneAvoided        Float    @default(0) // metric tons
+  tippingRevenue        Float    @default(0)
+  notes                 String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@unique([month, year])
+}
+
+// System Users (for audit trail)
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String
+  role          String   @default("operator") // admin, manager, operator
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ==========================================
+// SCALE HOUSE & WEIGHT TICKET SYSTEM
+// ==========================================
+
+// Scale Transaction - Weight ticket record
+model ScaleTransaction {
+  id                    String    @id @default(cuid())
+  ticketNumber          String    @unique // WT-YYMMDD-XXXX format
+  transactionType       String    // "inbound" | "outbound_pickup"
+  status                String    @default("in_progress") // in_progress, pending_signature, completed, voided
+
+  // Client/Hauler Info
+  clientId              String?
+  client                Client?   @relation(fields: [clientId], references: [id])
+  haulerName            String?   // For external haulers not in system
+  haulerCompany         String?
+
+  // Vehicle & Driver
+  licensePlate          String
+  vehicleType           String?
+  driverName            String
+  driverPhone           String?
+  driverEmail           String?
+
+  // Material Info
+  materialType          String
+  materialDescription   String?
+
+  // Weights (stored in pounds)
+  grossWeight           Float?    // Full truck weight
+  tareWeight            Float?    // Empty truck weight
+  netWeight             Float?    // Calculated: gross - tare
+
+  // Timestamps
+  timeIn                DateTime  @default(now())
+  timeOut               DateTime?
+
+  // Photos (Supabase Storage URLs)
+  grossWeightPhotoUrl   String?
+  tareWeightPhotoUrl    String?
+
+  // OCR Data (what Claude Vision extracted)
+  grossWeightOcrValue   Float?
+  tareWeightOcrValue    Float?
+
+  // Driver Signature
+  signatureDataUrl      String?   // Base64 data URL of signature
+  signatureSignedAt     DateTime?
+  signerName            String?
+
+  // Generated Documents
+  weightTicketPdfUrl    String?
+  bolPdfUrl             String?
+
+  // Billing
+  tippingFeeRate        Float?
+  totalCharge           Float?
+
+  // Notifications
+  clientEmailSentAt     DateTime?
+  driverSmsSentAt       DateTime?
+
+  // Metadata
+  operatorNotes         String?
+  createdBy             String?   // Operator who created
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  billOfLading          BillOfLading?
+}
+
+// Bill of Lading
+model BillOfLading {
+  id                    String    @id @default(cuid())
+  bolNumber             String    @unique // BOL-YYMMDD-XXXX format
+
+  scaleTransactionId    String    @unique
+  scaleTransaction      ScaleTransaction @relation(fields: [scaleTransactionId], references: [id])
+
+  // Shipper Info
+  shipperName           String
+  shipperAddress        String
+  shipperCity           String?
+  shipperState          String?
+  shipperZip            String?
+  shipperContact        String?
+  shipperPhone          String?
+
+  // Consignee Info
+  consigneeName         String
+  consigneeAddress      String
+  consigneeCity         String?
+  consigneeState        String?
+  consigneeZip          String?
+  consigneeContact      String?
+  consigneePhone        String?
+
+  // Material Description
+  materialDescription   String
+  quantity              Float     // weight
+  quantityUnit          String    @default("lbs") // lbs, tons
+
+  // Additional Info
+  specialInstructions   String?
+
+  // Document
+  pdfUrl                String?
+
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
+
+// Company Trucks (for outbound pickups)
+model CompanyTruck {
+  id            String   @id @default(cuid())
+  truckNumber   String   @unique  // Internal fleet number (e.g., "T-001")
+  licensePlate  String
+  vehicleType   String   // semi_trailer, roll_off_truck, dump_truck, pickup_truck
+  capacity      Float?   // Max capacity in tons
+  tareWeight    Float?   // Known empty weight for quick reference
+  status        String   @default("active") // active, maintenance, retired
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Company Drivers
+model Driver {
+  id            String   @id @default(cuid())
+  name          String
+  phone         String
+  email         String?
+  licenseNumber String?
+  status        String   @default("active") // active, inactive
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
