@@ -6,7 +6,12 @@ import { prisma } from "@/lib/prisma"
 import { formatDate, formatWeight, INTAKE_STATUSES, WASTE_TYPES } from "@/lib/utils"
 import { Plus, Filter, Search } from "lucide-react"
 
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
+
 async function getIntakes() {
+  if (!process.env.DATABASE_URL) return []
+
   return prisma.wasteIntake.findMany({
     include: {
       client: {

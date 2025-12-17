@@ -6,7 +6,12 @@ import { prisma } from "@/lib/prisma"
 import { formatCurrency } from "@/lib/utils"
 import { Plus, Building2, Phone, Mail } from "lucide-react"
 
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
+
 async function getClients() {
+  if (!process.env.DATABASE_URL) return []
+
   return prisma.client.findMany({
     include: {
       _count: {

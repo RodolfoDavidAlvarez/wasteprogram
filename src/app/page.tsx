@@ -13,7 +13,37 @@ import {
   calculateCompostProduced,
 } from "@/lib/utils"
 
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
+
 async function getDashboardData() {
+  // Allow deployments to succeed before a DB is configured.
+  if (!process.env.DATABASE_URL) {
+    return {
+      stats: {
+        ytdWasteDiverted: 0,
+        ytdRevenue: 0,
+        ytdIntakeCount: 0,
+        monthWasteDiverted: 0,
+        monthRevenue: 0,
+        monthIntakeCount: 0,
+        pendingIntakes: 0,
+        activeClients: 0,
+      },
+      recentIntakes: [],
+      upcomingSchedule: [],
+      calendarIntakes: [],
+      monthlyData: [],
+      wasteTypeData: [{ name: "No Data", value: 0 }],
+      environmentalImpact: {
+        totalWasteDiverted: 0,
+        co2Avoided: 0,
+        landfillSpaceSaved: 0,
+        compostProduced: 0,
+      },
+    }
+  }
+
   const now = new Date()
   const startOfYear = new Date(now.getFullYear(), 0, 1)
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)

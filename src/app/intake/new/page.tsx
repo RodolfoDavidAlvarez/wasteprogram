@@ -2,7 +2,12 @@ import { Header } from "@/components/layout/Header"
 import { IntakeForm } from "@/components/intake/IntakeForm"
 import { prisma } from "@/lib/prisma"
 
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
+
 async function getClients() {
+  if (!process.env.DATABASE_URL) return []
+
   return prisma.client.findMany({
     where: { status: "active" },
     select: {

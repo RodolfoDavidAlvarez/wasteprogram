@@ -8,7 +8,25 @@ import { prisma } from "@/lib/prisma"
 import { formatDate, formatWeight, INTAKE_STATUSES } from "@/lib/utils"
 import { Plus, Calendar as CalendarIcon, Truck, MapPin, Clock, ChevronLeft, ChevronRight } from "lucide-react"
 
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
+
 async function getScheduleData() {
+  // Allow public schedule page to deploy before DB is configured.
+  if (!process.env.DATABASE_URL) {
+    const startOfWeek = new Date()
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay())
+    startOfWeek.setHours(0, 0, 0, 0)
+
+    return {
+      weekIntakes: [],
+      upcomingIntakes: [],
+      todayIntakes: [],
+      calendarIntakes: [],
+      startOfWeek,
+    }
+  }
+
   const now = new Date()
   const startOfWeek = new Date(now)
   startOfWeek.setDate(now.getDate() - now.getDay())

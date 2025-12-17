@@ -16,7 +16,21 @@ import {
   Leaf,
 } from "lucide-react"
 
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
+
 async function getReportData() {
+  if (!process.env.DATABASE_URL) {
+    return {
+      ytd: { weight: 0, revenue: 0, intakes: 0 },
+      lastMonth: { weight: 0, revenue: 0, intakes: 0 },
+      thisMonth: { weight: 0, revenue: 0, intakes: 0 },
+      topClients: [],
+      wasteByType: [],
+      monthlyBreakdown: [],
+    }
+  }
+
   const now = new Date()
   const startOfYear = new Date(now.getFullYear(), 0, 1)
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)

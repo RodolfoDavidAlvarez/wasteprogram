@@ -18,7 +18,20 @@ import {
   Droplets,
 } from "lucide-react"
 
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
+
 async function getImpactData() {
+  if (!process.env.DATABASE_URL) {
+    return {
+      ytdWeight: 0,
+      ytdIntakes: 0,
+      allTimeWeight: 0,
+      allTimeIntakes: 0,
+      monthlyData: [],
+    }
+  }
+
   const now = new Date()
   const startOfYear = new Date(now.getFullYear(), 0, 1)
 
