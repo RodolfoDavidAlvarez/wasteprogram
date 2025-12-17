@@ -29,7 +29,7 @@ export async function uploadScalePhoto(
 ): Promise<string> {
   const fileName = `${transactionId}/${type}-${Date.now()}.jpg`
 
-  const { data, error } = await supabase.storage
+  const { error } = await supabase.storage
     .from(STORAGE_BUCKETS.SCALE_PHOTOS)
     .upload(fileName, file, {
       contentType: 'image/jpeg',
@@ -58,7 +58,7 @@ export async function uploadSignature(
 
   const fileName = `${transactionId}/signature-${Date.now()}.png`
 
-  const { data, error } = await supabase.storage
+  const { error } = await supabase.storage
     .from(STORAGE_BUCKETS.SIGNATURES)
     .upload(fileName, blob, {
       contentType: 'image/png',
@@ -84,7 +84,7 @@ export async function uploadDocument(
 ): Promise<string> {
   const fileName = `${transactionId}/${type}-${Date.now()}.pdf`
 
-  const { data, error } = await supabase.storage
+  const { error } = await supabase.storage
     .from(STORAGE_BUCKETS.DOCUMENTS)
     .upload(fileName, pdfBuffer, {
       contentType: 'application/pdf',

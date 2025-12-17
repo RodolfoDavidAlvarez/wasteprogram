@@ -147,9 +147,9 @@ export function Calendar({ intakes = [] }: CalendarProps) {
         {/* Calendar grid */}
         <div className="grid grid-cols-7 gap-1">
           {calendarDays.map((day, index) => {
-            const hasIntakes = day !== null && intakesByDay[day]?.length > 0
             const isTodayDate = isToday(day)
             const isPastDate = isPast(day)
+            const hasIntakes = day !== null && intakesByDay[day]?.length > 0
 
             return (
               <div
@@ -163,7 +163,9 @@ export function Calendar({ intakes = [] }: CalendarProps) {
                         ? "bg-emerald-100 border-emerald-300 font-bold"
                         : isPastDate
                           ? "bg-gray-50 border-gray-200 text-gray-400"
-                          : "bg-white border-gray-200 hover:border-emerald-300"
+                      : hasIntakes
+                        ? "bg-emerald-50 border-emerald-300 hover:border-emerald-400"
+                        : "bg-white border-gray-200 hover:border-emerald-300"
                   }
                 `}
               >
@@ -175,7 +177,15 @@ export function Calendar({ intakes = [] }: CalendarProps) {
                         ${isTodayDate ? "text-emerald-700" : "text-gray-800"}
                       `}
                     >
-                      {day}
+                      <div className="flex items-center justify-between">
+                        <span>{day}</span>
+                        {hasIntakes && (
+                          <span
+                            className="inline-block h-2 w-2 rounded-full bg-emerald-500"
+                            aria-label="Has intakes"
+                          />
+                        )}
+                      </div>
                     </div>
 
                     {/* Intakes for this day */}
@@ -237,7 +247,6 @@ export function Calendar({ intakes = [] }: CalendarProps) {
           </DialogHeader>
           <div className="space-y-3 mt-4">
             {selectedDay && intakesByDay[selectedDay]?.map((intake) => {
-              const totalWeight = intakesByDay[selectedDay].reduce((sum, i) => sum + i.estimatedWeight, 0)
               return (
                 <Link key={intake.id} href={`/intakes/${intake.id}`}>
                   <div className="border rounded-lg p-4 hover:bg-emerald-50 transition-colors cursor-pointer">

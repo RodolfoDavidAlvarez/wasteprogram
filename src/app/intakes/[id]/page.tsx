@@ -1,14 +1,11 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import { Header } from "@/components/layout/Header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { prisma } from "@/lib/prisma"
 import {
   formatDate,
-  formatDateTime,
   formatWeight,
-  formatCurrency,
   INTAKE_STATUSES,
   WASTE_TYPES,
   PACKAGING_TYPES,
@@ -20,14 +17,10 @@ import {
   Truck,
   Calendar,
   AlertTriangle,
-  CheckCircle,
-  XCircle,
   Edit,
   Printer,
   FileText,
-  Camera,
   Weight,
-  Clock,
   MapPin,
 } from "lucide-react"
 import { SubmitBOLButton } from "@/components/intakes/SubmitBOLButton"
