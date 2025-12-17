@@ -12,7 +12,26 @@ import {
   TrendingDown,
 } from "lucide-react"
 
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
+
 async function getContaminationData() {
+  // Allow deployments to succeed before a DB is configured.
+  if (!process.env.DATABASE_URL) {
+    return {
+      reports: [],
+      contaminatedIntakes: [],
+      stats: {
+        totalIntakesYTD: 0,
+        contaminationCountYTD: 0,
+        contaminationCountMonth: 0,
+        contaminationRate: "0",
+      },
+      byType: [],
+      bySeverity: [],
+    }
+  }
+
   const now = new Date()
   const startOfYear = new Date(now.getFullYear(), 0, 1)
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
