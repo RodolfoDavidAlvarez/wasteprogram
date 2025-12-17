@@ -95,11 +95,21 @@ async function getScheduleData() {
     orderBy: { scheduledDate: "asc" },
   })
 
+  // Transform for calendar component with all needed fields
+  const calendarIntakesWithFields = calendarIntakes.map(intake => ({
+    id: intake.id,
+    ticketNumber: intake.ticketNumber,
+    scheduledDate: intake.scheduledDate,
+    scheduledTimeWindow: intake.scheduledTimeWindow,
+    estimatedWeight: intake.estimatedWeight,
+    client: intake.client,
+  }))
+
   return {
     weekIntakes,
     upcomingIntakes,
     todayIntakes,
-    calendarIntakes,
+    calendarIntakes: calendarIntakesWithFields,
     startOfWeek,
   }
 }

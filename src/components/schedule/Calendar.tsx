@@ -1,20 +1,26 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, Truck, Package, Weight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import Link from "next/link"
 
 interface CalendarProps {
   intakes?: Array<{
     id: string
+    ticketNumber: string
     scheduledDate: Date | string
+    scheduledTimeWindow?: string | null
+    estimatedWeight: number
     client: { companyName: string }
   }>
 }
 
 export function Calendar({ intakes = [] }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date())
+  const [selectedDay, setSelectedDay] = useState<number | null>(null)
   const today = new Date()
 
   // Get calendar days for current month
@@ -175,18 +181,24 @@ export function Calendar({ intakes = [] }: CalendarProps) {
                     {/* Intakes for this day */}
                     <div className="space-y-1">
                       {intakesByDay[day]?.slice(0, 2).map((intake) => (
-                        <div
-                          key={intake.id}
-                          className="text-xs bg-emerald-50 text-emerald-700 p-1 rounded truncate hover:bg-emerald-100 cursor-pointer"
-                          title={intake.client.companyName}
-                        >
-                          {intake.client.companyName}
-                        </div>
+                        <Link key={intake.id} href={`/intakes/${intake.id}`}>
+                          <div className="text-xs bg-emerald-50 text-emerald-700 p-1.5 rounded hover:bg-emerald-100 cursor-pointer transition-colors">
+                            <div className="font-mono text-[10px] font-semibold truncate">
+                              {intake.ticketNumber}
+                            </div>
+                            <div className="truncate opacity-80 text-[10px]">
+                              {(intake.estimatedWeight).toFixed(1)} tons
+                            </div>
+                          </div>
+                        </Link>
                       ))}
                       {intakesByDay[day]?.length > 2 && (
-                        <div className="text-xs text-emerald-600 font-semibold px-1">
+                        <button
+                          onClick={() => setSelectedDay(day)}
+                          className="w-full text-xs text-emerald-600 font-semibold px-1 hover:underline cursor-pointer"
+                        >
                           +{intakesByDay[day].length - 2} more
-                        </div>
+                        </button>
                       )}
                     </div>
                   </>
@@ -208,6 +220,68 @@ export function Calendar({ intakes = [] }: CalendarProps) {
           </div>
         </div>
       </CardContent>
+
+      {/* Day Detail Dialog */}
+      <Dialog open={selectedDay !== null} onOpenChange={() => setSelectedDay(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Truck className="h-5 w-5 mr-2 text-emerald-600" />
+              {selectedDay && (
+                <>
+                  {currentDate.toLocaleDateString("en-US", { month: "long" })} {selectedDay},{" "}
+                  {currentDate.getFullYear()}
+                </>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-4">
+            {selectedDay && intakesByDay[selectedDay]?.map((intake) => {
+              const totalWeight = intakesByDay[selectedDay].reduce((sum, i) => sum + i.estimatedWeight, 0)
+              return (
+                <Link key={intake.id} href={`/intakes/${intake.id}`}>
+                  <div className="border rounded-lg p-4 hover:bg-emerald-50 transition-colors cursor-pointer">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-mono text-sm font-semibold text-emerald-600">
+                            {intake.ticketNumber}
+                          </span>
+                        </div>
+                        <p className="font-medium text-gray-900">{intake.client.companyName}</p>
+                        {intake.scheduledTimeWindow && (
+                          <p className="text-sm text-gray-500 mt-1">
+                            {intake.scheduledTimeWindow}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <div className="flex items-center text-gray-700">
+                          <Weight className="h-4 w-4 mr-1" />
+                          <span className="font-semibold">{intake.estimatedWeight.toFixed(1)} tons</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              )
+            })}
+            {selectedDay && intakesByDay[selectedDay] && (
+              <div className="border-t pt-3 mt-3">
+                <div className="flex justify-between items-center bg-emerald-50 p-3 rounded-lg">
+                  <span className="font-semibold text-emerald-900">Total for Day:</span>
+                  <div className="flex items-center">
+                    <Package className="h-5 w-5 mr-2 text-emerald-600" />
+                    <span className="text-lg font-bold text-emerald-600">
+                      {intakesByDay[selectedDay].reduce((sum, i) => sum + i.estimatedWeight, 0).toFixed(1)} tons
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }
