@@ -136,14 +136,14 @@ async function getDashboardData() {
   }))
 
   // Get calendar intakes (this month and next)
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+  const calendarStartOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
   const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0)
 
   const calendarIntakes = await prisma.wasteIntake.findMany({
     where: {
       status: { in: ["approved", "scheduled", "in_transit"] },
       scheduledDate: {
-        gte: startOfMonth,
+        gte: calendarStartOfMonth,
         lte: endOfMonth,
       },
     },
