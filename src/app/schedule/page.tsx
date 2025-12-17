@@ -6,7 +6,7 @@ import { Tabs } from "@/components/ui/tabs";
 import { Calendar } from "@/components/schedule/Calendar";
 import { prisma } from "@/lib/prisma";
 import { formatDate, formatWeight, INTAKE_STATUSES } from "@/lib/utils";
-import { Plus, Calendar as CalendarIcon, Truck, MapPin, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar as CalendarIcon, Truck, MapPin, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -403,18 +403,9 @@ export default async function SchedulePage() {
 
   return (
     <div>
-      <Header title="Schedule" subtitle="Manage pickups and deliveries" />
+      <Header title="Schedule" subtitle="Public pickup & delivery calendar" />
       <div className="p-6 space-y-6">
-        {/* Actions Bar */}
-        <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold">December 2024</h2>
-          <Link href="/intake/new">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              New Intake
-            </Button>
-          </Link>
-        </div>
+        {/* Public view: no admin actions */}
 
         {/* Tabbed Views */}
         <Tabs
