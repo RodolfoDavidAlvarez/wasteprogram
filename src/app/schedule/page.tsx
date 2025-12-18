@@ -688,10 +688,6 @@ export default async function SchedulePage() {
     </div>
   );
 
-  // Today's loads
-  const todayLoads = allLoads.filter((load) => load.isToday);
-  const todayDateStr = todayAZ.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Clean Header */}
@@ -709,7 +705,7 @@ export default async function SchedulePage() {
             {
               label: "Today",
               value: "today",
-              content: <TodayView loads={todayLoads} todayDateStr={todayDateStr} />,
+              content: <TodayView allLoads={allLoads} />,
             },
             {
               label: "Overview",

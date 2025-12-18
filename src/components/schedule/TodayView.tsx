@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { CheckCircle2, Clock, Truck, Upload, X, FileText } from "lucide-react";
+import { useState, useMemo } from "react";
+import { CheckCircle2, Clock, Truck, Upload, ChevronLeft, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type LoadItem = {
@@ -19,30 +19,97 @@ type LoadItem = {
 };
 
 interface TodayViewProps {
-  loads: LoadItem[];
-  todayDateStr: string;
+  allLoads: LoadItem[];
 }
 
-export function TodayView({ loads, todayDateStr }: TodayViewProps) {
+export function TodayView({ allLoads }: TodayViewProps) {
   const [selectedLoad, setSelectedLoad] = useState<LoadItem | null>(null);
+  const [dayOffset, setDayOffset] = useState(0);
+
+  // Calculate the selected date based on offset (Arizona timezone)
+  const selectedDate = useMemo(() => {
+    const nowAZ = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Phoenix" }));
+    const date = new Date(nowAZ.getFullYear(), nowAZ.getMonth(), nowAZ.getDate());
+    date.setDate(date.getDate() + dayOffset);
+    return date;
+  }, [dayOffset]);
+
+  // Filter loads for the selected day
+  const loads = useMemo(() => {
+    return allLoads.filter((load) => {
+      const loadDate = new Date(load.scheduledDate);
+      const loadDay = new Date(loadDate.getFullYear(), loadDate.getMonth(), loadDate.getDate());
+      return loadDay.getTime() === selectedDate.getTime();
+    });
+  }, [allLoads, selectedDate]);
+
+  // Format the selected date for display
+  const dateStr = selectedDate.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+
+  // Determine label (Today, Yesterday, Tomorrow, or just date)
+  const dayLabel = useMemo(() => {
+    if (dayOffset === 0) return "Today";
+    if (dayOffset === -1) return "Yesterday";
+    if (dayOffset === 1) return "Tomorrow";
+    return selectedDate.toLocaleDateString("en-US", { weekday: "long" });
+  }, [dayOffset, selectedDate]);
 
   const todayDelivered = loads.filter((l) => l.isDelivered).length;
   const todayPending = loads.length - todayDelivered;
 
   return (
     <div className="space-y-6">
-      {/* Today Header */}
-      <div className="text-center py-4 sm:py-6">
-        <div className="text-xs sm:text-sm text-gray-500 uppercase tracking-wide mb-1">Today</div>
-        <div className="text-xl sm:text-2xl font-bold text-gray-900">{todayDateStr}</div>
+      {/* Day Header with Navigation */}
+      <div className="flex items-center justify-between py-4 sm:py-6">
+        {/* Previous Day Button */}
+        <button
+          onClick={() => setDayOffset((d) => d - 1)}
+          className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-100 hover:bg-gray-200 active:bg-gray-300 transition-colors"
+          aria-label="Previous day"
+        >
+          <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
+        </button>
+
+        {/* Date Display */}
+        <div className="text-center flex-1 px-2">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <span className="text-xs sm:text-sm text-gray-500 uppercase tracking-wide">{dayLabel}</span>
+            {dayOffset !== 0 && (
+              <button
+                onClick={() => setDayOffset(0)}
+                className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors font-medium"
+              >
+                Back to Today
+              </button>
+            )}
+          </div>
+          <div className="text-lg sm:text-2xl font-bold text-gray-900">{dateStr}</div>
+        </div>
+
+        {/* Next Day Button */}
+        <button
+          onClick={() => setDayOffset((d) => d + 1)}
+          className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-100 hover:bg-gray-200 active:bg-gray-300 transition-colors"
+          aria-label="Next day"
+        >
+          <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
+        </button>
       </div>
 
       {loads.length === 0 ? (
-        /* No loads today */
+        /* No loads for selected day */
         <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
           <Truck className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 font-medium">No deliveries scheduled for today</p>
-          <p className="text-sm text-gray-400 mt-1">Check the Overview tab for upcoming loads</p>
+          <p className="text-gray-500 font-medium">
+            No deliveries scheduled for {dayOffset === 0 ? "today" : dateStr}
+          </p>
+          <p className="text-sm text-gray-400 mt-1">
+            Use the arrows to check other days or see the Overview tab
+          </p>
         </div>
       ) : (
         <>
@@ -58,10 +125,10 @@ export function TodayView({ loads, todayDateStr }: TodayViewProps) {
             </div>
           </div>
 
-          {/* Today's Loads */}
+          {/* Day's Loads */}
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-              Today&apos;s Loads ({loads.length})
+              {dayLabel}&apos;s Loads ({loads.length})
             </h3>
             {loads.map((load) => (
               <div
@@ -133,7 +200,7 @@ export function TodayView({ loads, todayDateStr }: TodayViewProps) {
 
           {/* Day Total */}
           <div className="bg-gray-100 rounded-lg p-4 flex justify-between items-center">
-            <span className="font-semibold text-gray-700">Today&apos;s Total</span>
+            <span className="font-semibold text-gray-700">{dayLabel}&apos;s Total</span>
             <span className="text-lg font-bold text-gray-900">{loads.length * 20} tons</span>
           </div>
         </>
