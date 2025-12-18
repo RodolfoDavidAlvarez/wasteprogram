@@ -373,3 +373,25 @@ model Driver {
 
   @@map("wd_drivers")
 }
+
+// ==========================================
+// DELIVERY RECORDS (Schedule Tracking)
+// ==========================================
+
+// Delivery Record - Tracks delivery status and documentation for scheduled loads
+model DeliveryRecord {
+  id              String    @id @default(cuid())
+  vrNumber        String    @unique  // VR number (e.g., "121825-74")
+  loadNumber      Int                // Load # (1-23)
+  status          String    @default("scheduled") // scheduled, delivered
+  deliveredAt     DateTime?
+  deliveredBy     String?            // Who marked it delivered
+  photoUrls       String?            // JSON array of Supabase storage URLs
+  notes           String?
+  tonnage         Float     @default(20)
+  scheduledDate   DateTime
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("wd_delivery_records")
+}

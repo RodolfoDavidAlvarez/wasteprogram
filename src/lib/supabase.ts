@@ -11,6 +11,7 @@ export const STORAGE_BUCKETS = {
   SCALE_PHOTOS: "scale-photos",
   SIGNATURES: "signatures",
   DOCUMENTS: "documents",
+  DELIVERY_PHOTOS: "delivery-photos",
 } as const;
 
 /**
@@ -78,4 +79,22 @@ export async function deleteStorageFiles(bucket: keyof typeof STORAGE_BUCKETS, p
   const { error } = await supabase.storage.from(STORAGE_BUCKETS[bucket]).remove(paths);
 
   if (error) throw error;
+}
+
+/**
+ * Upload a delivery photo to Supabase Storage
+ */
+export async function uploadDeliveryPhoto(file: File | Blob, vrNumber: string): Promise<string> {
+  const fileName = `${vrNumber}/${Date.now()}.jpg`;
+
+  const { error } = await supabase.storage.from(STORAGE_BUCKETS.DELIVERY_PHOTOS).upload(fileName, file, {
+    contentType: "image/jpeg",
+    upsert: false,
+  });
+
+  if (error) throw error;
+
+  const { data: urlData } = supabase.storage.from(STORAGE_BUCKETS.DELIVERY_PHOTOS).getPublicUrl(fileName);
+
+  return urlData.publicUrl;
 }

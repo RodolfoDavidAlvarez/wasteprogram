@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { CheckCircle2, Clock, Truck, Upload, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { CheckCircle2, Clock, Truck, Upload, ChevronLeft, ChevronRight, Camera, Image as ImageIcon, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type LoadItem = {
@@ -25,6 +25,12 @@ interface TodayViewProps {
 export function TodayView({ allLoads }: TodayViewProps) {
   const [selectedLoad, setSelectedLoad] = useState<LoadItem | null>(null);
   const [dayOffset, setDayOffset] = useState(0);
+  const [deliveryRecord, setDeliveryRecord] = useState<any>(null);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [marking, setMarking] = useState(false);
+  const [showPhotos, setShowPhotos] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Calculate the selected date based on offset (Arizona timezone)
   const selectedDate = useMemo(() => {
@@ -64,6 +70,114 @@ export function TodayView({ allLoads }: TodayViewProps) {
 
   const todayDelivered = loads.filter((l) => l.isDelivered).length;
   const todayPending = loads.length - todayDelivered;
+
+  // Fetch delivery record when load is selected
+  useEffect(() => {
+    if (selectedLoad?.vrNumber) {
+      fetch(`/api/schedule/delivery-record/${selectedLoad.vrNumber}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.record) {
+            setDeliveryRecord(data.record);
+            setPhotos(data.record.photoUrls || []);
+          } else {
+            setDeliveryRecord(null);
+            setPhotos([]);
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching delivery record:", error);
+        });
+    } else {
+      setDeliveryRecord(null);
+      setPhotos([]);
+    }
+  }, [selectedLoad?.vrNumber]);
+
+  // Handle photo upload
+  const handlePhotoUpload = async (file: File) => {
+    if (!selectedLoad?.vrNumber) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("vrNumber", selectedLoad.vrNumber);
+
+      const response = await fetch("/api/schedule/upload-photo", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setPhotos((prev) => [...prev, data.photoUrl]);
+      }
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      alert("Failed to upload photo. Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Handle camera/file selection
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handlePhotoUpload(file);
+    }
+  };
+
+  // Handle mark as delivered
+  const handleMarkDelivered = async () => {
+    if (!selectedLoad?.vrNumber) return;
+
+    const confirmed = confirm("Mark this load as delivered?");
+    if (!confirmed) return;
+
+    setMarking(true);
+    try {
+      // Ensure delivery record exists first
+      if (!deliveryRecord) {
+        await fetch(`/api/schedule/delivery-record/${selectedLoad.vrNumber}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            vrNumber: selectedLoad.vrNumber,
+            loadNumber: selectedLoad.loadNumber,
+            scheduledDate: selectedLoad.scheduledDate,
+            tonnage: 20,
+          }),
+        });
+      }
+
+      // Mark as delivered
+      const response = await fetch("/api/schedule/mark-delivered", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          vrNumber: selectedLoad.vrNumber,
+          deliveredBy: "Field Team",
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        // Update local state optimistically
+        setDeliveryRecord(data.record);
+        // Close modal
+        setSelectedLoad(null);
+        // Show success message
+        alert("Load marked as delivered successfully!");
+      }
+    } catch (error) {
+      console.error("Error marking as delivered:", error);
+      alert("Failed to mark as delivered. Please try again.");
+    } finally {
+      setMarking(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -258,34 +372,111 @@ export function TodayView({ allLoads }: TodayViewProps) {
               </div>
 
               {/* Action Buttons */}
-              {selectedLoad.isDelivered ? (
+              {selectedLoad.isDelivered || deliveryRecord?.status === "delivered" ? (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-center">
                   <CheckCircle2 className="h-8 w-8 text-emerald-600 mx-auto mb-2" />
                   <p className="font-semibold text-emerald-700">This load has been delivered</p>
+                  {deliveryRecord?.deliveredAt && (
+                    <p className="text-xs text-emerald-600 mt-1">
+                      {new Date(deliveryRecord.deliveredAt).toLocaleString()}
+                    </p>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {/* Unloaded Button */}
-                  <button
-                    disabled
-                    className="w-full py-4 px-6 rounded-xl bg-blue-100 border-2 border-blue-300 text-blue-400 font-semibold text-lg flex items-center justify-center gap-2 cursor-not-allowed"
-                  >
-                    <Truck className="h-5 w-5" />
-                    Mark as Unloaded
-                  </button>
-                  <p className="text-xs text-blue-400 text-center font-medium">Coming Soon</p>
+                  {/* Photo Documentation */}
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Take Photo Button */}
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading || !selectedLoad.vrNumber}
+                      className="py-3 px-4 rounded-lg bg-blue-50 border-2 border-blue-200 text-blue-700 font-semibold flex items-center justify-center gap-2 hover:bg-blue-100 active:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {uploading ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <Camera className="h-5 w-5" />
+                      )}
+                      <span className="text-sm">Take Photo</span>
+                    </button>
 
-                  {/* Upload Documentation - Coming Soon */}
-                  <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center">
-                    <Upload className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                    <p className="font-medium text-gray-400">Upload Documentation</p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      Weight ticket, BOL, or other shipment docs
-                    </p>
-                    <p className="text-xs text-blue-400 mt-2 font-medium">Coming Soon</p>
+                    {/* View Photos Button */}
+                    <button
+                      onClick={() => setShowPhotos(true)}
+                      disabled={photos.length === 0}
+                      className="py-3 px-4 rounded-lg bg-gray-50 border-2 border-gray-200 text-gray-700 font-semibold flex items-center justify-center gap-2 hover:bg-gray-100 active:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <ImageIcon className="h-5 w-5" />
+                      <span className="text-sm">
+                        Photos {photos.length > 0 && `(${photos.length})`}
+                      </span>
+                    </button>
                   </div>
+
+                  {/* Hidden file input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+
+                  {/* Mark as Delivered Button */}
+                  <button
+                    onClick={handleMarkDelivered}
+                    disabled={marking || !selectedLoad.vrNumber}
+                    className="w-full py-4 px-6 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-bold text-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg"
+                  >
+                    {marking ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        Marking as Delivered...
+                      </>
+                    ) : (
+                      <>
+                        <Truck className="h-5 w-5" />
+                        Mark as Delivered
+                      </>
+                    )}
+                  </button>
+
+                  <p className="text-xs text-gray-500 text-center">
+                    Photos are optional. You can mark as delivered without documentation.
+                  </p>
                 </div>
               )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Photo Gallery Dialog */}
+      <Dialog open={showPhotos} onOpenChange={setShowPhotos}>
+        <DialogContent className="max-w-2xl mx-2 sm:mx-auto rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Delivery Photos ({photos.length})</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto p-2">
+            {photos.map((photoUrl, index) => (
+              <div key={index} className="relative group">
+                <img
+                  src={photoUrl}
+                  alt={`Delivery photo ${index + 1}`}
+                  className="w-full h-auto rounded-lg border-2 border-gray-200 cursor-pointer hover:border-blue-400 transition-colors"
+                  onClick={() => window.open(photoUrl, "_blank")}
+                />
+                <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                  Photo {index + 1}
+                </div>
+              </div>
+            ))}
+          </div>
+          {photos.length === 0 && (
+            <div className="text-center py-8 text-gray-500">
+              <ImageIcon className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+              <p>No photos uploaded yet</p>
             </div>
           )}
         </DialogContent>
