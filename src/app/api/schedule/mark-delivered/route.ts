@@ -20,11 +20,11 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ success: true, record });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error marking as delivered:", error);
 
     // Handle record not found
-    if (error.code === "P2025") {
+    if (typeof error === "object" && error !== null && "code" in error && (error as { code?: string }).code === "P2025") {
       return NextResponse.json({ error: "Delivery record not found" }, { status: 404 });
     }
 

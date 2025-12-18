@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Try to find existing record
-    let record = await prisma.deliveryRecord.findUnique({
+    const record = await prisma.deliveryRecord.findUnique({
       where: { vrNumber },
     });
 
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         photoUrls,
       }
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching delivery record:", error);
     return NextResponse.json({ error: "Failed to fetch delivery record" }, { status: 500 });
   }
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { vrNumber } = await params;
-    const body = await request.json();
+    const body: Record<string, unknown> = await request.json();
 
     if (!vrNumber) {
       return NextResponse.json({ error: "VR number is required" }, { status: 400 });
@@ -52,21 +52,21 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const record = await prisma.deliveryRecord.upsert({
       where: { vrNumber },
       update: {
-        ...body,
+        ...(body as Record<string, unknown>),
         updatedAt: new Date(),
       },
       create: {
         vrNumber,
-        loadNumber: body.loadNumber || 0,
-        status: body.status || "scheduled",
-        tonnage: body.tonnage || 20,
-        scheduledDate: body.scheduledDate ? new Date(body.scheduledDate) : new Date(),
-        notes: body.notes,
+        loadNumber: typeof body.loadNumber === "number" ? body.loadNumber : 0,
+        status: typeof body.status === "string" ? body.status : "scheduled",
+        tonnage: typeof body.tonnage === "number" ? body.tonnage : 20,
+        scheduledDate: typeof body.scheduledDate === "string" ? new Date(body.scheduledDate) : new Date(),
+        notes: typeof body.notes === "string" ? body.notes : undefined,
       },
     });
 
     return NextResponse.json({ success: true, record });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating/updating delivery record:", error);
     return NextResponse.json({ error: "Failed to save delivery record" }, { status: 500 });
   }

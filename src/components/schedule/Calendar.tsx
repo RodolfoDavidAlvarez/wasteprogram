@@ -255,7 +255,12 @@ export function Calendar({ intakes = [] }: CalendarProps) {
       </CardContent>
 
       {/* Day Detail Dialog */}
-      <Dialog open={selectedDay !== null} onOpenChange={() => setSelectedDay(null)}>
+      <Dialog
+        open={selectedDay !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedDay(null);
+        }}
+      >
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto mx-2 sm:mx-auto rounded-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center text-base sm:text-lg">

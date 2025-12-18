@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import { CheckCircle2, Clock, Truck, Upload, ChevronLeft, ChevronRight, Camera, Image as ImageIcon, Loader2 } from "lucide-react";
+import { CheckCircle2, Clock, Truck, ChevronLeft, ChevronRight, Camera, Image as ImageIcon, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type LoadItem = {
@@ -22,10 +22,17 @@ interface TodayViewProps {
   allLoads: LoadItem[];
 }
 
+type DeliveryRecordUi = {
+  vrNumber: string;
+  status: "scheduled" | "delivered" | string;
+  deliveredAt: string | null;
+  photoUrls: string[];
+};
+
 export function TodayView({ allLoads }: TodayViewProps) {
   const [selectedLoad, setSelectedLoad] = useState<LoadItem | null>(null);
   const [dayOffset, setDayOffset] = useState(0);
-  const [deliveryRecord, setDeliveryRecord] = useState<any>(null);
+  const [deliveryRecord, setDeliveryRecord] = useState<DeliveryRecordUi | null>(null);
   const [photos, setPhotos] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [marking, setMarking] = useState(false);
@@ -325,7 +332,12 @@ export function TodayView({ allLoads }: TodayViewProps) {
       )}
 
       {/* Load Detail Modal */}
-      <Dialog open={selectedLoad !== null} onOpenChange={() => setSelectedLoad(null)}>
+      <Dialog
+        open={selectedLoad !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedLoad(null);
+        }}
+      >
         <DialogContent className="max-w-md mx-2 sm:mx-auto rounded-xl">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold">
