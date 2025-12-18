@@ -2,6 +2,7 @@ import { Tabs } from "@/components/ui/tabs";
 import { Calendar } from "@/components/schedule/Calendar";
 import { OverviewTable } from "@/components/schedule/OverviewTable";
 import { prisma } from "@/lib/prisma";
+import { CheckCircle2, Clock, Truck } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -687,20 +688,129 @@ export default async function SchedulePage() {
     </div>
   );
 
+  // Today's loads
+  const todayLoads = allLoads.filter((load) => load.isToday);
+  const todayDelivered = todayLoads.filter((l) => l.isDelivered).length;
+  const todayPending = todayLoads.length - todayDelivered;
+  const todayDateStr = todayAZ.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+
+  const todayContent = (
+    <div className="space-y-6">
+      {/* Today Header */}
+      <div className="text-center py-4 sm:py-6">
+        <div className="text-xs sm:text-sm text-gray-500 uppercase tracking-wide mb-1">Today</div>
+        <div className="text-xl sm:text-2xl font-bold text-gray-900">{todayDateStr}</div>
+      </div>
+
+      {todayLoads.length === 0 ? (
+        /* No loads today */
+        <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+          <Truck className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+          <p className="text-gray-500 font-medium">No deliveries scheduled for today</p>
+          <p className="text-sm text-gray-400 mt-1">Check the Overview tab for upcoming loads</p>
+        </div>
+      ) : (
+        <>
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-center">
+              <div className="text-3xl sm:text-4xl font-bold text-emerald-600">{todayDelivered}</div>
+              <div className="text-xs sm:text-sm text-emerald-700 font-medium mt-1">Delivered</div>
+            </div>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
+              <div className="text-3xl sm:text-4xl font-bold text-amber-600">{todayPending}</div>
+              <div className="text-xs sm:text-sm text-amber-700 font-medium mt-1">Pending</div>
+            </div>
+          </div>
+
+          {/* Today's Loads */}
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+              Today&apos;s Loads ({todayLoads.length})
+            </h3>
+            {todayLoads.map((load) => (
+              <div
+                key={load.id}
+                className={`rounded-lg border p-4 ${
+                  load.isDelivered
+                    ? "bg-emerald-50 border-emerald-200"
+                    : "bg-white border-gray-200"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    {/* VR Number - Big and Bold */}
+                    <div className="flex items-center gap-2 mb-2">
+                      {load.isDelivered ? (
+                        <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0" />
+                      ) : (
+                        <Clock className="h-5 w-5 text-amber-500 flex-shrink-0" />
+                      )}
+                      <span className="font-mono text-lg sm:text-xl font-bold text-gray-900">
+                        {load.vrNumber ? `VR ${load.vrNumber}` : "VR# Pending"}
+                      </span>
+                    </div>
+
+                    {/* Status */}
+                    <div className="flex flex-wrap items-center gap-2 text-sm">
+                      <span className={`font-medium ${load.isDelivered ? "text-emerald-700" : "text-amber-600"}`}>
+                        {load.isDelivered ? (load.statusTag === "moved" ? "Delivered (rescheduled)" : "Delivered") : "Scheduled"}
+                      </span>
+                      <span className="text-gray-400">·</span>
+                      <span className="text-gray-600">20 tons</span>
+                      {load.eta && !load.isDelivered && (
+                        <>
+                          <span className="text-gray-400">·</span>
+                          <span className="text-gray-600">ETA {load.eta}</span>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Notes */}
+                    {load.note && (
+                      <p className="text-xs sm:text-sm text-gray-500 mt-2">{load.note}</p>
+                    )}
+                  </div>
+
+                  {/* Load Number */}
+                  <div className="text-right flex-shrink-0">
+                    <span className="text-xs text-gray-400">Load</span>
+                    <div className="text-lg font-bold text-gray-400">#{load.loadNumber}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Day Total */}
+          <div className="bg-gray-100 rounded-lg p-4 flex justify-between items-center">
+            <span className="font-semibold text-gray-700">Today&apos;s Total</span>
+            <span className="text-lg font-bold text-gray-900">{todayLoads.length * 20} tons</span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Clean Header */}
       <div className="bg-white border-b">
-        <div className="max-w-5xl mx-auto px-6 py-6">
-          <h1 className="text-2xl font-bold text-gray-900">Delivery Schedule</h1>
-          <p className="text-gray-500 mt-1">Vanguard / Purina Dog Food - Flagstaff</p>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Delivery Schedule</h1>
+          <p className="text-sm sm:text-base text-gray-500 mt-1">Vanguard / Purina Dog Food - Flagstaff</p>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         <Tabs
           tabs={[
+            {
+              label: "Today",
+              value: "today",
+              content: todayContent,
+            },
             {
               label: "Overview",
               value: "summary",
