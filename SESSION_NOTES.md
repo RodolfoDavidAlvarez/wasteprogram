@@ -8,10 +8,16 @@
 - Made entire schedule page mobile-responsive
 - Polished Calendar view for mobile (compact cells, tap to see details)
 - Drafted team email with delivery schedule link
+- Added "Today" tab as default view for mobile-first experience
+- Created TodayView component with clickable load cards
+- Added detail modal with "Mark as Unloaded" button (disabled, Coming Soon)
+- Added Upload Documentation placeholder for weight tickets/BOL
+- Improved button contrast and visibility
 
 ### Key Changes
+- `src/components/schedule/TodayView.tsx` - NEW client component with clickable cards, modal, action buttons
 - `src/components/schedule/OverviewTable.tsx` - New client component with toggle
-- `src/app/schedule/page.tsx` - Integrated OverviewTable, cleaned up imports
+- `src/app/schedule/page.tsx` - Integrated OverviewTable & TodayView, Today tab is now default
 - `src/components/schedule/Calendar.tsx` - Mobile-responsive redesign
 
 ### Known Issues / TODO
