@@ -3,6 +3,7 @@ import { Calendar } from "@/components/schedule/Calendar";
 import { OverviewTable } from "@/components/schedule/OverviewTable";
 import { TodayView } from "@/components/schedule/TodayView";
 import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import { ScheduleTheme } from "./ScheduleTheme";
 import { DocumentationTab } from "@/components/schedule/DocumentationTab";
@@ -599,8 +600,40 @@ async function getScheduleData() {
   };
 }
 
+// Fetch all delivery records for photo data (using Supabase client for reliability)
+async function getDeliveryRecordsForPhotos() {
+  try {
+    const { data, error } = await supabase
+      .from("wd_delivery_records")
+      .select("vrNumber, photoUrls, status, deliveredAt, loadNumber")
+      .limit(500);
+
+    if (error) throw error;
+
+    // Create a map: vrNumber → { photoUrls, photoCount, status, deliveredAt, loadNumber }
+    const photosByVr: Record<string, { photoUrls: string[]; photoCount: number; status: string; deliveredAt: string | null; loadNumber: number }> = {};
+    for (const record of data ?? []) {
+      const urls = record.photoUrls ? JSON.parse(record.photoUrls) : [];
+      photosByVr[record.vrNumber] = {
+        photoUrls: urls,
+        photoCount: urls.length,
+        status: record.status,
+        deliveredAt: record.deliveredAt,
+        loadNumber: record.loadNumber,
+      };
+    }
+    return photosByVr;
+  } catch (error) {
+    console.error("Error fetching delivery records:", error);
+    return {};
+  }
+}
+
 export default async function SchedulePage() {
-  const data = await getScheduleData();
+  const [data, photosByVr] = await Promise.all([
+    getScheduleData(),
+    getDeliveryRecordsForPhotos(),
+  ]);
 
   // Calculate summary stats
   // Each load is ~44,000 lbs = ~22 tons (from Casey's emails)
@@ -638,7 +671,7 @@ export default async function SchedulePage() {
   const summaryContent = (
     <div className="space-y-8">
       {/* Hero Stats - Big and Clear */}
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
         <div className="text-center py-6 border-b-4 border-gray-200">
           <div className="text-5xl font-bold text-gray-900">{totalLoads}</div>
           <div className="text-sm text-gray-500 mt-1 uppercase tracking-wide">Total Loads</div>
@@ -731,7 +764,7 @@ export default async function SchedulePage() {
               {
                 label: "Today",
                 value: "today",
-                content: <TodayView allLoads={allLoads} />,
+                content: <TodayView allLoads={allLoads} photosByVr={photosByVr} />,
               },
               {
                 label: "Documentation",

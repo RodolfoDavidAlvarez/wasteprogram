@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Truck } from "lucide-react";
+import Link from "next/link";
+import { ChevronLeft, ChevronRight, ChevronRightIcon, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -83,6 +84,17 @@ export function Calendar({ intakes = [] }: CalendarProps) {
     return map;
   }, [intakes, currentDate]);
 
+  // Check if all loads for a day are delivered
+  const getDayDeliveryStatus = (day: number): "all_delivered" | "all_scheduled" | "mixed" | "none" => {
+    const dayIntakes = intakesByDay[day];
+    if (!dayIntakes || dayIntakes.length === 0) return "none";
+
+    const delivered = dayIntakes.filter(i => i.statusTag === "arrived" || i.statusTag === "moved").length;
+    if (delivered === dayIntakes.length) return "all_delivered";
+    if (delivered === 0) return "all_scheduled";
+    return "mixed";
+  };
+
   const isToday = (day: number | null) => {
     if (day === null) return false;
     return day === today.getDate() && currentDate.getMonth() === today.getMonth() && currentDate.getFullYear() === today.getFullYear();
@@ -156,6 +168,42 @@ export function Calendar({ intakes = [] }: CalendarProps) {
             const isPastDate = isPast(day);
             const hasIntakes = day !== null && intakesByDay[day]?.length > 0;
             const intakeCount = day !== null ? intakesByDay[day]?.length || 0 : 0;
+            const deliveryStatus = day !== null ? getDayDeliveryStatus(day) : "none";
+
+            // Determine background color based on delivery status
+            const getDayStyles = () => {
+              if (day === null) return "bg-gray-50 border-gray-100";
+              if (isTodayDate) {
+                // Today gets special styling regardless of delivery status
+                if (deliveryStatus === "all_delivered") {
+                  return "bg-emerald-200 border-emerald-500 ring-2 ring-blue-400 font-bold";
+                }
+                return "bg-blue-100 border-blue-400 ring-2 ring-blue-400 font-bold";
+              }
+              if (!hasIntakes) return "bg-white border-gray-200 hover:border-gray-300";
+
+              // Days with deliveries - color by status
+              switch (deliveryStatus) {
+                case "all_delivered":
+                  return "bg-emerald-100 border-emerald-500 hover:border-emerald-600";
+                case "all_scheduled":
+                  return "bg-orange-100 border-orange-400 hover:border-orange-500";
+                case "mixed":
+                  return "bg-gradient-to-br from-emerald-100 to-orange-100 border-orange-400 hover:border-orange-500";
+                default:
+                  return "bg-white border-gray-200";
+              }
+            };
+
+            // Badge color based on status
+            const getBadgeColor = () => {
+              switch (deliveryStatus) {
+                case "all_delivered": return "bg-emerald-600";
+                case "all_scheduled": return "bg-orange-500";
+                case "mixed": return "bg-blue-500";
+                default: return "bg-gray-400";
+              }
+            };
 
             return (
               <div
@@ -164,17 +212,7 @@ export function Calendar({ intakes = [] }: CalendarProps) {
                 className={`
                   min-h-[48px] sm:min-h-[100px] p-1 sm:p-2 rounded sm:rounded-lg border text-sm
                   ${hasIntakes ? "cursor-pointer" : ""}
-                  ${
-                    day === null
-                      ? "bg-gray-50 border-gray-100"
-                      : isTodayDate
-                        ? "bg-blue-100 border-blue-300 font-bold"
-                        : isPastDate
-                          ? "bg-gray-50 border-gray-200 text-gray-400"
-                          : hasIntakes
-                            ? "bg-emerald-50 border-emerald-300 hover:border-emerald-400"
-                            : "bg-white border-gray-200 hover:border-emerald-300"
-                  }
+                  ${getDayStyles()}
                 `}
               >
                 {day && (
@@ -190,12 +228,12 @@ export function Calendar({ intakes = [] }: CalendarProps) {
                         <span>{day}</span>
                         {/* Mobile: show count badge */}
                         {hasIntakes && (
-                          <span className="sm:hidden inline-flex items-center justify-center h-4 w-4 text-[10px] font-bold rounded-full bg-emerald-500 text-white">
+                          <span className={`sm:hidden inline-flex items-center justify-center h-4 w-4 text-[10px] font-bold rounded-full text-white ${getBadgeColor()}`}>
                             {intakeCount}
                           </span>
                         )}
                         {/* Desktop: show dot */}
-                        {hasIntakes && <span className="hidden sm:inline-block h-2 w-2 rounded-full bg-emerald-500" aria-label="Has intakes" />}
+                        {hasIntakes && <span className={`hidden sm:inline-block h-2 w-2 rounded-full ${getBadgeColor()}`} aria-label="Has intakes" />}
                       </div>
                     </div>
 
@@ -242,12 +280,16 @@ export function Calendar({ intakes = [] }: CalendarProps) {
         <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t text-xs text-gray-600">
           <div className="flex flex-wrap gap-3 sm:gap-4">
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-100 border border-blue-300 rounded"></div>
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-100 border-2 border-blue-400 rounded ring-1 ring-blue-400"></div>
               <span>Today</span>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-emerald-50 border border-emerald-300 rounded"></div>
-              <span>Has deliveries</span>
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-emerald-100 border-2 border-emerald-500 rounded"></div>
+              <span>Delivered</span>
+            </div>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-orange-100 border-2 border-orange-400 rounded"></div>
+              <span>Scheduled</span>
             </div>
           </div>
           <p className="sm:hidden text-gray-400 mt-2">Tap a day to see delivery details</p>
@@ -276,30 +318,52 @@ export function Calendar({ intakes = [] }: CalendarProps) {
             {selectedDay &&
               intakesByDay[selectedDay]?.map((intake) => {
                 const pill = getStatusPill(intake.statusTag ?? null);
-                return (
-                  <div key={intake.id} className="border rounded-lg p-3 sm:p-4 bg-white">
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                      <div className="flex-1">
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          {intake.vrNumber && (
-                            <span className="text-xs font-semibold text-gray-900 bg-gray-100 px-2 py-0.5 rounded font-mono">
-                              VR {intake.vrNumber}
-                            </span>
-                          )}
-                          {pill && <span className={`text-xs font-semibold px-2 py-0.5 rounded ${pill.className}`}>{pill.label}</span>}
-                        </div>
-                        <p className="font-medium text-gray-900 text-sm sm:text-base">{intake.client.companyName}</p>
-                        {(intake.eta || intake.note) && (
-                          <p className="text-xs text-gray-600 mt-1">
-                            {intake.eta ? `ETA ${intake.eta}` : ""}
-                            {intake.eta && intake.note ? " · " : ""}
-                            {intake.note ?? ""}
-                          </p>
+                const hasVrNumber = !!intake.vrNumber;
+
+                const cardContent = (
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
+                        {intake.vrNumber && (
+                          <span className="text-xs font-semibold text-gray-900 bg-gray-100 px-2 py-0.5 rounded font-mono">
+                            VR {intake.vrNumber}
+                          </span>
                         )}
-                        {intake.scheduledTimeWindow && <p className="text-xs sm:text-sm text-gray-500 mt-1">{intake.scheduledTimeWindow}</p>}
+                        {pill && <span className={`text-xs font-semibold px-2 py-0.5 rounded ${pill.className}`}>{pill.label}</span>}
                       </div>
-                      <div className="text-sm font-medium text-gray-700">20 tons</div>
+                      <p className="font-medium text-gray-900 text-sm sm:text-base">{intake.client.companyName}</p>
+                      {(intake.eta || intake.note) && (
+                        <p className="text-xs text-gray-600 mt-1">
+                          {intake.eta ? `ETA ${intake.eta}` : ""}
+                          {intake.eta && intake.note ? " · " : ""}
+                          {intake.note ?? ""}
+                        </p>
+                      )}
+                      {intake.scheduledTimeWindow && <p className="text-xs sm:text-sm text-gray-500 mt-1">{intake.scheduledTimeWindow}</p>}
                     </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <div className="text-sm font-medium text-gray-700">20 tons</div>
+                      {hasVrNumber && (
+                        <span className="inline-flex items-center text-xs font-semibold text-emerald-600 group-hover:text-emerald-700">
+                          View Details
+                          <ChevronRightIcon className="h-3 w-3 ml-0.5" />
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+
+                return hasVrNumber ? (
+                  <Link
+                    key={intake.id}
+                    href={`/schedule/records/${encodeURIComponent(intake.vrNumber!)}`}
+                    className="block border rounded-lg p-3 sm:p-4 bg-white hover:border-emerald-400 hover:shadow-sm transition-all group"
+                  >
+                    {cardContent}
+                  </Link>
+                ) : (
+                  <div key={intake.id} className="border rounded-lg p-3 sm:p-4 bg-white">
+                    {cardContent}
                   </div>
                 );
               })}

@@ -13,12 +13,31 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "VR number is required" }, { status: 400 });
     }
 
-    const { data: record, error } = await supabase.from("wd_delivery_records").select("*").eq("vrNumber", vrNumber).maybeSingle();
+    let { data: record, error } = await supabase.from("wd_delivery_records").select("*").eq("vrNumber", vrNumber).maybeSingle();
     if (error) throw error;
 
-    // If not found, return null - record will be created when needed
+    // If not found, auto-create a scheduled record so the detail page works
     if (!record) {
-      return NextResponse.json({ record: null });
+      const now = new Date().toISOString();
+      const { data: newRecord, error: createError } = await supabase
+        .from("wd_delivery_records")
+        .insert({
+          id: crypto.randomUUID(),
+          vrNumber,
+          loadNumber: 0,
+          status: "scheduled",
+          tonnage: 20,
+          scheduledDate: now,
+          notes: null,
+          photoUrls: "[]",
+          createdAt: now,
+          updatedAt: now,
+        })
+        .select("*")
+        .single();
+
+      if (createError) throw createError;
+      record = newRecord;
     }
 
     // Parse photoUrls for the response

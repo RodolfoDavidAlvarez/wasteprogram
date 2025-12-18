@@ -172,7 +172,7 @@ export function DocumentationTab() {
                     </div>
                   </div>
 
-                  {r.photoUrls.length > 0 && (
+                  {r.photoUrls.length > 0 ? (
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {r.photoUrls.slice(0, 4).map((url) => (
                         <a key={url} href={url} target="_blank" rel="noreferrer">
@@ -181,6 +181,17 @@ export function DocumentationTab() {
                           </div>
                         </a>
                       ))}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 py-3 px-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                      <Camera className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm text-gray-500">No photos yet</span>
+                      <Link
+                        href={`/schedule/records/${encodeURIComponent(r.vrNumber)}`}
+                        className="text-xs text-emerald-600 hover:underline ml-auto"
+                      >
+                        Add photos
+                      </Link>
                     </div>
                   )}
                 </div>
