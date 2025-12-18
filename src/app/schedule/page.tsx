@@ -609,13 +609,18 @@ export default async function SchedulePage() {
   const totalTons = totalLoads * TONS_PER_LOAD;
 
   // Build complete load list with all details
+  // Use Arizona timezone for accurate "today" detection
+  const nowAZ = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Phoenix" }));
+  const todayAZ = new Date(nowAZ.getFullYear(), nowAZ.getMonth(), nowAZ.getDate());
+
   const allLoads = data.calendarIntakes
     .sort((a, b) => +new Date(a.scheduledDate) - +new Date(b.scheduledDate))
     .map((intake, idx) => {
       const d = new Date(intake.scheduledDate);
+      const loadDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
       const isDelivered = intake.statusTag === "arrived" || intake.statusTag === "moved";
-      const isPast = d < new Date(new Date().setHours(0, 0, 0, 0));
-      const isToday = d.toDateString() === new Date().toDateString();
+      const isPast = loadDate < todayAZ;
+      const isToday = loadDate.getTime() === todayAZ.getTime();
       return {
         ...intake,
         loadNumber: idx + 1,
@@ -694,7 +699,7 @@ export default async function SchedulePage() {
                 >
                   <td className="py-3 px-2 text-gray-400 font-mono">{load.loadNumber}</td>
                   <td className="py-3 px-2">
-                    <span className={load.isToday ? "font-bold text-blue-700" : load.isPast ? "text-gray-500" : "font-medium"}>
+                    <span className={load.isToday ? "font-bold text-blue-700" : load.isDelivered ? "text-gray-700" : "font-medium text-gray-900"}>
                       {load.dateStr}
                     </span>
                     {load.isToday && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">TODAY</span>}
