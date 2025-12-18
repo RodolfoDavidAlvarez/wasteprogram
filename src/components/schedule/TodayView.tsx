@@ -34,21 +34,25 @@ export function TodayView({ allLoads }: TodayViewProps) {
     return date;
   }, [dayOffset]);
 
-  // Filter loads for the selected day
-  const loads = useMemo(() => {
-    return allLoads.filter((load) => {
-      const loadDate = new Date(load.scheduledDate);
-      const loadDay = new Date(loadDate.getFullYear(), loadDate.getMonth(), loadDate.getDate());
-      return loadDay.getTime() === selectedDate.getTime();
-    });
-  }, [allLoads, selectedDate]);
-
   // Format the selected date for display
   const dateStr = selectedDate.toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
   });
+
+  // Filter loads for the selected day
+  // For today (offset 0), use the pre-calculated isToday flag to avoid timezone issues
+  // For other days, compare the dateStr which is already formatted consistently
+  const loads = useMemo(() => {
+    if (dayOffset === 0) {
+      // Use the server-calculated isToday flag
+      return allLoads.filter((load) => load.isToday);
+    }
+    // For other days, compare the formatted date string
+    const targetDateStr = selectedDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+    return allLoads.filter((load) => load.dateStr === targetDateStr);
+  }, [allLoads, dayOffset, selectedDate]);
 
   // Determine label (Today, Yesterday, Tomorrow, or just date)
   const dayLabel = useMemo(() => {
