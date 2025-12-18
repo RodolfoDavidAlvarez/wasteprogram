@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { uploadDeliveryPhoto } from "@/lib/supabase";
 
@@ -29,6 +30,9 @@ export async function POST(request: NextRequest) {
       .select("*")
       .single();
     if (updateErr) throw updateErr;
+
+    // Revalidate the schedule page so it shows updated data
+    revalidatePath("/schedule");
 
     return NextResponse.json({
       success: true,

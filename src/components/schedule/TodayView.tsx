@@ -515,7 +515,7 @@ export function TodayView({ allLoads, photosByVr = {} }: TodayViewProps) {
                   </div>
 
                   {/* Hidden file input */}
-                  <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileSelect} className="hidden" />
+                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
 
                   {/* Mark as Delivered Button */}
                   <button

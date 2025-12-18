@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -68,6 +69,9 @@ export async function POST(request: NextRequest) {
         console.error("Failed to delete from storage:", storageError);
       }
     }
+
+    // Revalidate the schedule page so it shows updated data
+    revalidatePath("/schedule");
 
     return NextResponse.json({ success: true, photoUrls: updatedPhotos });
   } catch (error) {

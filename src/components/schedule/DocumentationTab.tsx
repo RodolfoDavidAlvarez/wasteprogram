@@ -3,10 +3,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Camera, Loader2, Plus } from "lucide-react";
+import { Camera, Loader2, Plus, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { PhotoLightbox } from "@/components/ui/photo-lightbox";
+import { usePinProtection } from "@/components/ui/pin-dialog";
 
 type RecordRow = {
   vrNumber: string;
@@ -22,6 +24,16 @@ export function DocumentationTab() {
   const [selectedVr, setSelectedVr] = useState<string>("");
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Lightbox state
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxPhotos, setLightboxPhotos] = useState<string[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [lightboxVr, setLightboxVr] = useState<string>("");
+  const [deleting, setDeleting] = useState(false);
+
+  // PIN protection
+  const { requestPin, PinDialogComponent } = usePinProtection();
 
   const refresh = async () => {
     const res = await fetch("/api/schedule/delivery-records");
@@ -72,8 +84,56 @@ export function DocumentationTab() {
     }
   };
 
+  const openLightbox = (vrNumber: string, photos: string[], index: number) => {
+    setLightboxVr(vrNumber);
+    setLightboxPhotos(photos);
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
+
+  const doDeletePhoto = async (photoUrl: string) => {
+    if (!lightboxVr) return;
+    setDeleting(true);
+    try {
+      const res = await fetch("/api/schedule/delete-photo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vrNumber: lightboxVr, photoUrl }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed to delete photo");
+
+      // Update lightbox photos
+      const newPhotos = lightboxPhotos.filter((p) => p !== photoUrl);
+      if (newPhotos.length === 0) {
+        setLightboxOpen(false);
+      } else {
+        setLightboxPhotos(newPhotos);
+        if (lightboxIndex >= newPhotos.length) {
+          setLightboxIndex(newPhotos.length - 1);
+        }
+      }
+
+      await refresh();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete photo.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeletePhoto = (photoUrl: string) => {
+    requestPin(() => doDeletePhoto(photoUrl), {
+      title: "Delete Photo",
+      description: "Enter admin PIN to delete this photo",
+    });
+  };
+
   return (
     <div className="space-y-4">
+      {PinDialogComponent}
+
       <div className="flex items-center justify-between">
         <div>
           <div className="text-sm text-gray-500">All documentation (by VR)</div>
@@ -108,7 +168,6 @@ export function DocumentationTab() {
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              capture="environment"
               multiple
               className="hidden"
               onChange={(e) => {
@@ -174,13 +233,36 @@ export function DocumentationTab() {
 
                   {r.photoUrls.length > 0 ? (
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {r.photoUrls.slice(0, 4).map((url) => (
-                        <a key={url} href={url} target="_blank" rel="noreferrer">
-                          <div className="relative aspect-[4/3] rounded-md overflow-hidden border border-gray-200 hover:border-emerald-400 transition-colors">
+                      {r.photoUrls.slice(0, 4).map((url, idx) => (
+                        <div key={url} className="relative group">
+                          <button
+                            onClick={() => openLightbox(r.vrNumber, r.photoUrls, idx)}
+                            className="relative aspect-[4/3] rounded-md overflow-hidden border border-gray-200 hover:border-emerald-400 transition-colors w-full"
+                          >
                             <Image src={url} alt={`VR ${r.vrNumber} photo`} fill className="object-cover" unoptimized />
-                          </div>
-                        </a>
+                          </button>
+                          {/* Delete button on hover */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLightboxVr(r.vrNumber);
+                              setLightboxPhotos(r.photoUrls);
+                              handleDeletePhoto(url);
+                            }}
+                            className="absolute top-1 right-1 p-1.5 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
                       ))}
+                      {r.photoUrls.length > 4 && (
+                        <button
+                          onClick={() => openLightbox(r.vrNumber, r.photoUrls, 4)}
+                          className="relative aspect-[4/3] rounded-md overflow-hidden border border-gray-200 bg-gray-100 hover:border-emerald-400 transition-colors flex items-center justify-center"
+                        >
+                          <span className="text-sm font-semibold text-gray-600">+{r.photoUrls.length - 4} more</span>
+                        </button>
+                      )}
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 py-3 px-4 bg-gray-50 rounded-lg border border-dashed border-gray-200">
@@ -200,7 +282,16 @@ export function DocumentationTab() {
           )}
         </CardContent>
       </Card>
+
+      {/* Photo Lightbox */}
+      <PhotoLightbox
+        photos={lightboxPhotos}
+        initialIndex={lightboxIndex}
+        open={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        onDelete={handleDeletePhoto}
+        deleting={deleting}
+      />
     </div>
   );
 }
-

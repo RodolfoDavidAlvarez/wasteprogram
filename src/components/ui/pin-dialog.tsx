@@ -122,50 +122,51 @@ export function PinDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm mx-auto">
+      <DialogContent className="max-w-sm mx-auto top-[20%] sm:top-[50%] translate-y-0 sm:-translate-y-1/2">
         <DialogHeader className="text-center">
-          <div className="mx-auto w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mb-2">
-            <Lock className="h-6 w-6 text-emerald-600" />
+          <div className="mx-auto w-10 h-10 sm:w-12 sm:h-12 bg-emerald-100 rounded-full flex items-center justify-center mb-2">
+            <Lock className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600" />
           </div>
-          <DialogTitle className="text-center">{title}</DialogTitle>
-          <DialogDescription className="text-center">{description}</DialogDescription>
+          <DialogTitle className="text-center text-base sm:text-lg">{title}</DialogTitle>
+          <DialogDescription className="text-center text-sm">{description}</DialogDescription>
         </DialogHeader>
 
-        <div className="mt-4">
+        <div className="mt-3 sm:mt-4">
           <div
-            className={`flex justify-center gap-3 ${shake ? "animate-shake" : ""}`}
+            className={`flex justify-center gap-2 sm:gap-3 ${shake ? "animate-shake" : ""}`}
             onPaste={handlePaste}
           >
             {pin.map((digit, index) => (
               <input
                 key={index}
                 ref={inputRefs[index]}
-                type="text"
+                type="tel"
                 inputMode="numeric"
+                pattern="[0-9]*"
                 maxLength={1}
                 value={digit}
                 onChange={(e) => handleChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
                 className={`
-                  w-14 h-14 text-center text-2xl font-bold rounded-lg border-2
+                  w-12 h-12 sm:w-14 sm:h-14 text-center text-xl sm:text-2xl font-bold rounded-lg border-2
                   focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500
                   ${error ? "border-red-500 bg-red-50" : "border-gray-300 bg-white"}
                   transition-colors
                 `}
-                autoComplete="off"
+                autoComplete="one-time-code"
               />
             ))}
           </div>
 
           {error && (
-            <p className="text-center text-red-600 text-sm mt-3 font-medium">
+            <p className="text-center text-red-600 text-sm mt-2 sm:mt-3 font-medium">
               Incorrect PIN. Please try again.
             </p>
           )}
         </div>
 
-        <div className="mt-4 flex justify-center">
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+        <div className="mt-3 sm:mt-4 flex justify-center">
+          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
             <X className="h-4 w-4 mr-2" />
             Cancel
           </Button>

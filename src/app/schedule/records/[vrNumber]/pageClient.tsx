@@ -3,10 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Camera, CheckCircle2, Loader2, X, ChevronLeft, ChevronRight, RotateCcw, Trash2, Undo2 } from "lucide-react";
+import { ArrowLeft, Camera, CheckCircle2, Loader2, Trash2, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScheduleTheme } from "../../ScheduleTheme";
 import { usePinProtection } from "@/components/ui/pin-dialog";
+import { PhotoLightbox } from "@/components/ui/photo-lightbox";
 
 type DeliveryRecordUi = {
   vrNumber: string;
@@ -31,7 +32,7 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [marking, setMarking] = useState(false);
-  const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [undoing, setUndoing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,31 +42,9 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
   // Photo lightbox state
   const [showLightbox, setShowLightbox] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [photoRotations, setPhotoRotations] = useState<Record<string, number>>({});
 
   const photos = useMemo(() => record?.photoUrls ?? [], [record]);
   const isDelivered = record?.status === "delivered";
-
-  // Load saved rotations from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem("photoRotations");
-    if (saved) {
-      setPhotoRotations(JSON.parse(saved));
-    }
-  }, []);
-
-  const saveRotation = (photoUrl: string, rotation: number) => {
-    const newRotations = { ...photoRotations, [photoUrl]: rotation };
-    setPhotoRotations(newRotations);
-    localStorage.setItem("photoRotations", JSON.stringify(newRotations));
-  };
-
-  const handleRotateLeft = () => {
-    const currentPhoto = photos[lightboxIndex];
-    const currentRotation = photoRotations[currentPhoto] || 0;
-    const newRotation = (currentRotation - 90 + 360) % 360;
-    saveRotation(currentPhoto, newRotation);
-  };
 
   useEffect(() => {
     let cancelled = false;
@@ -161,7 +140,7 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
   };
 
   const doDeletePhoto = async (photoUrl: string) => {
-    setDeleting(photoUrl);
+    setDeleting(true);
     try {
       const res = await fetch("/api/schedule/delete-photo", {
         method: "POST",
@@ -183,7 +162,7 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
       console.error(err);
       alert("Failed to delete photo.");
     } finally {
-      setDeleting(null);
+      setDeleting(false);
     }
   };
 
@@ -269,9 +248,6 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
                           alt={`Photo ${idx + 1}`}
                           fill
                           className="object-cover"
-                          style={{
-                            transform: `rotate(${photoRotations[url] || 0}deg)`,
-                          }}
                           unoptimized
                         />
                       </button>
@@ -281,10 +257,10 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
                           e.stopPropagation();
                           handleDeletePhoto(url);
                         }}
-                        disabled={deleting === url}
+                        disabled={deleting}
                         className="absolute top-1 right-1 p-1.5 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600"
                       >
-                        {deleting === url ? (
+                        {deleting ? (
                           <Loader2 className="h-3 w-3 animate-spin" />
                         ) : (
                           <Trash2 className="h-3 w-3" />
@@ -305,7 +281,6 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
-                capture="environment"
                 onChange={handleFileSelect}
                 className="hidden"
               />
@@ -369,98 +344,15 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
         )}
       </div>
 
-      {/* Full-screen Photo Lightbox */}
-      {showLightbox && photos.length > 0 && (
-        <div
-          className="fixed inset-0 z-50 bg-black flex items-center justify-center"
-          onClick={() => setShowLightbox(false)}
-        >
-          {/* Top bar */}
-          <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 bg-gradient-to-b from-black/70 to-transparent">
-            {photos.length > 1 ? (
-              <div className="px-3 py-1 rounded-full bg-black/50 text-white text-sm font-medium">
-                {lightboxIndex + 1} / {photos.length}
-              </div>
-            ) : (
-              <div />
-            )}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRotateLeft();
-                }}
-                className="p-2 rounded-full bg-black/50 text-white hover:bg-black/70"
-                title="Rotate left"
-              >
-                <RotateCcw className="h-6 w-6" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeletePhoto(photos[lightboxIndex]);
-                }}
-                className="p-2 rounded-full bg-red-500/80 text-white hover:bg-red-600"
-                title="Delete photo"
-              >
-                <Trash2 className="h-6 w-6" />
-              </button>
-              <button
-                onClick={() => setShowLightbox(false)}
-                className="p-2 rounded-full bg-black/50 text-white hover:bg-black/70"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-          </div>
-
-          {/* Nav buttons */}
-          {photos.length > 1 && (
-            <>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setLightboxIndex((prev) => (prev === 0 ? photos.length - 1 : prev - 1));
-                }}
-                className="absolute left-2 z-10 p-2 rounded-full bg-black/50 text-white"
-              >
-                <ChevronLeft className="h-6 w-6" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setLightboxIndex((prev) => (prev === photos.length - 1 ? 0 : prev + 1));
-                }}
-                className="absolute right-2 z-10 p-2 rounded-full bg-black/50 text-white"
-              >
-                <ChevronRight className="h-6 w-6" />
-              </button>
-            </>
-          )}
-
-          {/* Photo */}
-          <div
-            className="relative w-full h-full flex items-center justify-center p-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              className="relative w-full h-full transition-transform duration-300"
-              style={{
-                transform: `rotate(${photoRotations[photos[lightboxIndex]] || 0}deg)`,
-              }}
-            >
-              <Image
-                src={photos[lightboxIndex]}
-                alt={`Photo ${lightboxIndex + 1}`}
-                fill
-                className="object-contain"
-                unoptimized
-                priority
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Photo Lightbox with Zoom */}
+      <PhotoLightbox
+        photos={photos}
+        initialIndex={lightboxIndex}
+        open={showLightbox}
+        onClose={() => setShowLightbox(false)}
+        onDelete={handleDeletePhoto}
+        deleting={deleting}
+      />
     </div>
   );
 }
