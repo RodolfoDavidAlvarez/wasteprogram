@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Camera, CheckCircle2, Loader2, X, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
+import { ArrowLeft, Camera, CheckCircle2, Loader2, X, ChevronLeft, ChevronRight, RotateCcw, Trash2, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScheduleTheme } from "../../ScheduleTheme";
+import { usePinProtection } from "@/components/ui/pin-dialog";
 
 type DeliveryRecordUi = {
   vrNumber: string;
@@ -30,7 +31,12 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [marking, setMarking] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [undoing, setUndoing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // PIN protection hook
+  const { requestPin, PinDialogComponent } = usePinProtection();
 
   // Photo lightbox state
   const [showLightbox, setShowLightbox] = useState(false);
@@ -102,9 +108,7 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
     }
   };
 
-  const handleMarkDelivered = async () => {
-    const confirmed = confirm("Mark this load as delivered?");
-    if (!confirmed) return;
+  const doMarkDelivered = async () => {
     setMarking(true);
     try {
       const res = await fetch("/api/schedule/mark-delivered", {
@@ -123,9 +127,77 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
     }
   };
 
+  const handleMarkDelivered = () => {
+    requestPin(doMarkDelivered, {
+      title: "Confirm Delivery",
+      description: "Enter admin PIN to mark this load as delivered",
+    });
+  };
+
+  const doUndoDelivery = async () => {
+    setUndoing(true);
+    try {
+      const res = await fetch("/api/schedule/undo-delivery", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vrNumber }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed to undo delivery");
+      await refresh();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to undo delivery status.");
+    } finally {
+      setUndoing(false);
+    }
+  };
+
+  const handleUndoDelivery = () => {
+    requestPin(doUndoDelivery, {
+      title: "Undo Delivery",
+      description: "Enter admin PIN to revert this load to scheduled status",
+    });
+  };
+
+  const doDeletePhoto = async (photoUrl: string) => {
+    setDeleting(photoUrl);
+    try {
+      const res = await fetch("/api/schedule/delete-photo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vrNumber, photoUrl }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed to delete photo");
+      // If we were viewing the deleted photo in lightbox, close or adjust
+      if (showLightbox && photos[lightboxIndex] === photoUrl) {
+        if (photos.length <= 1) {
+          setShowLightbox(false);
+        } else if (lightboxIndex >= photos.length - 1) {
+          setLightboxIndex(lightboxIndex - 1);
+        }
+      }
+      await refresh();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete photo.");
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  const handleDeletePhoto = (photoUrl: string) => {
+    requestPin(() => doDeletePhoto(photoUrl), {
+      title: "Delete Photo",
+      description: "Enter admin PIN to delete this photo",
+    });
+  };
+
   return (
     <div className="min-h-screen schedule-theme app-background">
       <ScheduleTheme />
+      {PinDialogComponent}
       <div className="p-4 space-y-4 max-w-lg mx-auto">
         {/* Back Button */}
         <Link
@@ -184,25 +256,41 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
               {photos.length > 0 ? (
                 <div className="grid grid-cols-3 gap-2 mb-4">
                   {photos.map((url, idx) => (
-                    <button
-                      key={url}
-                      onClick={() => {
-                        setLightboxIndex(idx);
-                        setShowLightbox(true);
-                      }}
-                      className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-emerald-400 transition-colors"
-                    >
-                      <Image
-                        src={url}
-                        alt={`Photo ${idx + 1}`}
-                        fill
-                        className="object-cover"
-                        style={{
-                          transform: `rotate(${photoRotations[url] || 0}deg)`,
+                    <div key={url} className="relative group">
+                      <button
+                        onClick={() => {
+                          setLightboxIndex(idx);
+                          setShowLightbox(true);
                         }}
-                        unoptimized
-                      />
-                    </button>
+                        className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-emerald-400 transition-colors w-full"
+                      >
+                        <Image
+                          src={url}
+                          alt={`Photo ${idx + 1}`}
+                          fill
+                          className="object-cover"
+                          style={{
+                            transform: `rotate(${photoRotations[url] || 0}deg)`,
+                          }}
+                          unoptimized
+                        />
+                      </button>
+                      {/* Delete button overlay */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeletePhoto(url);
+                        }}
+                        disabled={deleting === url}
+                        className="absolute top-1 right-1 p-1.5 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600"
+                      >
+                        {deleting === url ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3 w-3" />
+                        )}
+                      </button>
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -257,6 +345,26 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
                 )}
               </Button>
             )}
+
+            {/* Undo Delivery Button (only show when delivered) */}
+            {isDelivered && (
+              <Button
+                onClick={handleUndoDelivery}
+                disabled={undoing}
+                variant="outline"
+                className="w-full h-12 text-amber-700 border-amber-300 hover:bg-amber-50"
+              >
+                {undoing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Reverting...
+                  </>
+                ) : (
+                  <>
+                    <Undo2 className="h-4 w-4 mr-2" /> Undo Delivery Status
+                  </>
+                )}
+              </Button>
+            )}
           </>
         )}
       </div>
@@ -283,8 +391,19 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
                   handleRotateLeft();
                 }}
                 className="p-2 rounded-full bg-black/50 text-white hover:bg-black/70"
+                title="Rotate left"
               >
                 <RotateCcw className="h-6 w-6" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeletePhoto(photos[lightboxIndex]);
+                }}
+                className="p-2 rounded-full bg-red-500/80 text-white hover:bg-red-600"
+                title="Delete photo"
+              >
+                <Trash2 className="h-6 w-6" />
               </button>
               <button
                 onClick={() => setShowLightbox(false)}

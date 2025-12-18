@@ -13,8 +13,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "VR number is required" }, { status: 400 });
     }
 
-    let { data: record, error } = await supabase.from("wd_delivery_records").select("*").eq("vrNumber", vrNumber).maybeSingle();
-    if (error) throw error;
+    const result = await supabase.from("wd_delivery_records").select("*").eq("vrNumber", vrNumber).maybeSingle();
+    if (result.error) throw result.error;
+    let record = result.data;
 
     // If not found, auto-create a scheduled record so the detail page works
     if (!record) {

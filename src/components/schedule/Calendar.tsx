@@ -89,7 +89,7 @@ export function Calendar({ intakes = [] }: CalendarProps) {
     const dayIntakes = intakesByDay[day];
     if (!dayIntakes || dayIntakes.length === 0) return "none";
 
-    const delivered = dayIntakes.filter(i => i.statusTag === "arrived" || i.statusTag === "moved").length;
+    const delivered = dayIntakes.filter((i) => i.statusTag === "arrived" || i.statusTag === "moved").length;
     if (delivered === dayIntakes.length) return "all_delivered";
     if (delivered === 0) return "all_scheduled";
     return "mixed";
@@ -198,10 +198,14 @@ export function Calendar({ intakes = [] }: CalendarProps) {
             // Badge color based on status
             const getBadgeColor = () => {
               switch (deliveryStatus) {
-                case "all_delivered": return "bg-emerald-600";
-                case "all_scheduled": return "bg-orange-500";
-                case "mixed": return "bg-blue-500";
-                default: return "bg-gray-400";
+                case "all_delivered":
+                  return "bg-emerald-600";
+                case "all_scheduled":
+                  return "bg-orange-500";
+                case "mixed":
+                  return "bg-blue-500";
+                default:
+                  return "bg-gray-400";
               }
             };
 
@@ -228,7 +232,9 @@ export function Calendar({ intakes = [] }: CalendarProps) {
                         <span>{day}</span>
                         {/* Mobile: show count badge */}
                         {hasIntakes && (
-                          <span className={`sm:hidden inline-flex items-center justify-center h-4 w-4 text-[10px] font-bold rounded-full text-white ${getBadgeColor()}`}>
+                          <span
+                            className={`sm:hidden inline-flex items-center justify-center h-4 w-4 text-[10px] font-bold rounded-full text-white ${getBadgeColor()}`}
+                          >
                             {intakeCount}
                           </span>
                         )}
@@ -325,9 +331,7 @@ export function Calendar({ intakes = [] }: CalendarProps) {
                     <div className="flex-1">
                       <div className="flex flex-wrap items-center gap-2 mb-1">
                         {intake.vrNumber && (
-                          <span className="text-xs font-semibold text-gray-900 bg-gray-100 px-2 py-0.5 rounded font-mono">
-                            VR {intake.vrNumber}
-                          </span>
+                          <span className="text-xs font-semibold text-gray-900 bg-gray-100 px-2 py-0.5 rounded font-mono">VR {intake.vrNumber}</span>
                         )}
                         {pill && <span className={`text-xs font-semibold px-2 py-0.5 rounded ${pill.className}`}>{pill.label}</span>}
                       </div>

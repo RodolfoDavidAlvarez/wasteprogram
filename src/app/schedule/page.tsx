@@ -603,15 +603,13 @@ async function getScheduleData() {
 // Fetch all delivery records for photo data (using Supabase client for reliability)
 async function getDeliveryRecordsForPhotos() {
   try {
-    const { data, error } = await supabase
-      .from("wd_delivery_records")
-      .select("vrNumber, photoUrls, status, deliveredAt, loadNumber")
-      .limit(500);
+    const { data, error } = await supabase.from("wd_delivery_records").select("vrNumber, photoUrls, status, deliveredAt, loadNumber").limit(500);
 
     if (error) throw error;
 
     // Create a map: vrNumber → { photoUrls, photoCount, status, deliveredAt, loadNumber }
-    const photosByVr: Record<string, { photoUrls: string[]; photoCount: number; status: string; deliveredAt: string | null; loadNumber: number }> = {};
+    const photosByVr: Record<string, { photoUrls: string[]; photoCount: number; status: string; deliveredAt: string | null; loadNumber: number }> =
+      {};
     for (const record of data ?? []) {
       const urls = record.photoUrls ? JSON.parse(record.photoUrls) : [];
       photosByVr[record.vrNumber] = {
@@ -630,10 +628,7 @@ async function getDeliveryRecordsForPhotos() {
 }
 
 export default async function SchedulePage() {
-  const [data, photosByVr] = await Promise.all([
-    getScheduleData(),
-    getDeliveryRecordsForPhotos(),
-  ]);
+  const [data, photosByVr] = await Promise.all([getScheduleData(), getDeliveryRecordsForPhotos()]);
 
   // Calculate summary stats
   // Each load is ~44,000 lbs = ~22 tons (from Casey's emails)
@@ -733,22 +728,22 @@ export default async function SchedulePage() {
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-primary via-[hsl(var(--ring))] to-transparent"
         />
-	        <div className="px-4 sm:px-6 py-4 sm:py-6">
-	          <div className="flex items-center gap-3 mb-2">
-	            <div className="inline-flex items-center rounded-lg bg-card shadow-sm ring-1 ring-black/5 px-3 py-2">
-	              <div className="relative h-10 sm:h-12 aspect-[2083/729]">
-	                <Image
-	                  src="/ssw-logo.png"
-	                  alt="Soil Seed & Water"
-	                  fill
-	                  priority
-	                  unoptimized
-	                  sizes="(min-width: 640px) 137px, 114px"
-	                  className="object-contain"
-	                />
-	              </div>
-	            </div>
-	          </div>
+        <div className="px-4 sm:px-6 py-4 sm:py-6">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="inline-flex items-center rounded-lg bg-card shadow-sm ring-1 ring-black/5 px-3 py-2">
+              <div className="relative h-10 sm:h-12 aspect-[2083/729]">
+                <Image
+                  src="/ssw-logo.png"
+                  alt="Soil Seed & Water"
+                  fill
+                  priority
+                  unoptimized
+                  sizes="(min-width: 640px) 137px, 114px"
+                  className="object-contain"
+                />
+              </div>
+            </div>
+          </div>
           <div className="max-w-5xl">
             <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">Waste Scheduled Delivery</h1>
             <p className="text-sm sm:text-base text-muted-foreground mt-1">Vanguard / Purina Dog Food - Flagstaff</p>

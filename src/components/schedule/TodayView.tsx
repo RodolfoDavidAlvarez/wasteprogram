@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { CheckCircle2, Clock, Truck, ChevronLeft, ChevronRight, Camera, Image as ImageIcon, Loader2, X, RotateCcw } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { usePinProtection } from "@/components/ui/pin-dialog";
 
 type LoadItem = {
   id: string;
@@ -50,6 +51,9 @@ export function TodayView({ allLoads, photosByVr = {} }: TodayViewProps) {
   const [marking, setMarking] = useState(false);
   const [showPhotos, setShowPhotos] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // PIN protection hook
+  const { requestPin, PinDialogComponent } = usePinProtection();
 
   // Photo lightbox state
   const [lightboxPhotos, setLightboxPhotos] = useState<string[]>([]);
@@ -180,12 +184,9 @@ export function TodayView({ allLoads, photosByVr = {} }: TodayViewProps) {
     }
   };
 
-  // Handle mark as delivered
-  const handleMarkDelivered = async () => {
+  // Handle mark as delivered (actual logic)
+  const doMarkDelivered = async () => {
     if (!selectedLoad?.vrNumber) return;
-
-    const confirmed = confirm("Mark this load as delivered?");
-    if (!confirmed) return;
 
     setMarking(true);
     try {
@@ -230,8 +231,18 @@ export function TodayView({ allLoads, photosByVr = {} }: TodayViewProps) {
     }
   };
 
+  // Handle mark as delivered (with PIN protection)
+  const handleMarkDelivered = () => {
+    if (!selectedLoad?.vrNumber) return;
+    requestPin(doMarkDelivered, {
+      title: "Confirm Delivery",
+      description: "Enter admin PIN to mark this load as delivered",
+    });
+  };
+
   return (
     <div className="space-y-6">
+      {PinDialogComponent}
       {/* Day Header with Navigation */}
       <div className="flex items-center justify-between py-4 sm:py-6">
         {/* Previous Day Button */}
