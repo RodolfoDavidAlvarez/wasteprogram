@@ -731,13 +731,13 @@ export default async function SchedulePage() {
             {todayLoads.map((load) => (
               <div
                 key={load.id}
-                className={`rounded-lg border p-4 ${
+                className={`rounded-xl border-2 p-4 transition-all cursor-pointer active:scale-[0.99] ${
                   load.isDelivered
-                    ? "bg-emerald-50 border-emerald-200"
-                    : "bg-white border-gray-200"
+                    ? "bg-emerald-50 border-emerald-300"
+                    : "bg-white border-gray-200 hover:border-blue-300 hover:shadow-sm"
                 }`}
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     {/* VR Number - Big and Bold */}
                     <div className="flex items-center gap-2 mb-2">
@@ -772,10 +772,29 @@ export default async function SchedulePage() {
                     )}
                   </div>
 
-                  {/* Load Number */}
-                  <div className="text-right flex-shrink-0">
-                    <span className="text-xs text-gray-400">Load</span>
-                    <div className="text-lg font-bold text-gray-400">#{load.loadNumber}</div>
+                  {/* Load Number & Action Button */}
+                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                    <div className="text-right">
+                      <span className="text-xs text-gray-400">Load</span>
+                      <div className="text-lg font-bold text-gray-400">#{load.loadNumber}</div>
+                    </div>
+
+                    {/* Action Button - Disabled for now */}
+                    {load.isDelivered ? (
+                      <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-100 text-emerald-700">
+                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                        Done
+                      </span>
+                    ) : (
+                      <button
+                        disabled
+                        className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-100 text-blue-400 opacity-60 cursor-not-allowed"
+                        title="Coming soon"
+                      >
+                        <Truck className="h-3.5 w-3.5 mr-1" />
+                        Unloaded
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
