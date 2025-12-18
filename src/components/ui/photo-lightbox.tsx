@@ -60,7 +60,7 @@ export function PhotoLightbox({
   };
 
   const handleZoomIn = () => {
-    setZoom((z) => Math.min(z + 0.5, 4));
+    setZoom((z) => Math.min(z + 0.5, 3));
   };
 
   const handleZoomOut = () => {
@@ -112,162 +112,129 @@ export function PhotoLightbox({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, currentIndex, photos.length, onClose]);
 
   if (!open || photos.length === 0) return null;
 
+  // Check if rotated sideways (90 or 270 degrees)
+  const isSideways = rotation === 90 || rotation === 270;
+
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/95 flex flex-col"
-      onClick={onClose}
-    >
-      {/* Top bar with controls */}
-      <div className="flex items-center justify-between p-3 sm:p-4 bg-gradient-to-b from-black/80 to-transparent z-10">
-        {/* Photo counter */}
-        <div className="flex items-center gap-2">
-          {photos.length > 1 && (
-            <div className="px-3 py-1 rounded-full bg-white/10 text-white text-sm font-medium backdrop-blur-sm">
-              {currentIndex + 1} / {photos.length}
-            </div>
-          )}
+    <div className="fixed inset-0 z-50 bg-black flex flex-col">
+      {/* Close button - top right, always visible */}
+      <button
+        onClick={onClose}
+        className="absolute top-4 right-4 z-30 p-3 rounded-full bg-black/50 text-white active:bg-black/70"
+      >
+        <X className="h-6 w-6" />
+      </button>
+
+      {/* Photo counter - top left */}
+      {photos.length > 1 && (
+        <div className="absolute top-4 left-4 z-30 px-3 py-2 rounded-full bg-black/50 text-white text-sm font-medium">
+          {currentIndex + 1} / {photos.length}
         </div>
-
-        {/* Controls */}
-        <div className="flex items-center gap-1 sm:gap-2">
-          {/* Zoom controls */}
-          <div className="flex items-center bg-white/10 rounded-full backdrop-blur-sm">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleZoomOut();
-              }}
-              className="p-2 text-white hover:bg-white/20 rounded-l-full transition-colors"
-              title="Zoom out (-)"
-              disabled={zoom <= 0.5}
-            >
-              <ZoomOut className="h-5 w-5" />
-            </button>
-            <span className="text-white text-xs font-medium min-w-[40px] text-center">
-              {Math.round(zoom * 100)}%
-            </span>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleZoomIn();
-              }}
-              className="p-2 text-white hover:bg-white/20 rounded-r-full transition-colors"
-              title="Zoom in (+)"
-              disabled={zoom >= 4}
-            >
-              <ZoomIn className="h-5 w-5" />
-            </button>
-          </div>
-
-          {/* Rotate button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleRotate();
-            }}
-            className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm transition-colors"
-            title="Rotate (R)"
-          >
-            <RotateCw className="h-5 w-5" />
-          </button>
-
-          {/* Delete button */}
-          {onDelete && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete();
-              }}
-              disabled={deleting}
-              className="p-2 rounded-full bg-red-500/80 text-white hover:bg-red-600 backdrop-blur-sm transition-colors"
-              title="Delete photo"
-            >
-              {deleting ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <Trash2 className="h-5 w-5" />
-              )}
-            </button>
-          )}
-
-          {/* Close button */}
-          <button
-            onClick={onClose}
-            className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm transition-colors"
-            title="Close (Esc)"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* Main photo area */}
-      <div
-        className="flex-1 relative flex items-center justify-center overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Navigation buttons */}
+      <div className="flex-1 flex items-center justify-center overflow-hidden">
+        {/* Navigation arrows - left/right edges */}
         {photos.length > 1 && (
           <>
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePrev();
-              }}
-              className="absolute left-2 sm:left-4 z-10 p-2 sm:p-3 rounded-full bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm transition-colors"
-              aria-label="Previous photo"
+              onClick={handlePrev}
+              className="absolute left-2 z-20 p-2 rounded-full bg-black/40 text-white active:bg-black/60"
             >
-              <ChevronLeft className="h-6 w-6 sm:h-8 sm:w-8" />
+              <ChevronLeft className="h-8 w-8" />
             </button>
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleNext();
-              }}
-              className="absolute right-2 sm:right-4 z-10 p-2 sm:p-3 rounded-full bg-white/10 text-white hover:bg-white/20 backdrop-blur-sm transition-colors"
-              aria-label="Next photo"
+              onClick={handleNext}
+              className="absolute right-2 z-20 p-2 rounded-full bg-black/40 text-white active:bg-black/60"
             >
-              <ChevronRight className="h-6 w-6 sm:h-8 sm:w-8" />
+              <ChevronRight className="h-8 w-8" />
             </button>
           </>
         )}
 
-        {/* Photo container with proper overflow handling */}
-        <div className="relative w-full h-full flex items-center justify-center overflow-hidden p-4 sm:p-8">
-          <div
-            className="relative transition-transform duration-300 ease-out"
-            style={{
-              // When rotated 90/270 degrees, swap width and height constraints
-              width: rotation === 90 || rotation === 270 ? '70vh' : '90vw',
-              height: rotation === 90 || rotation === 270 ? '90vw' : '70vh',
-              maxWidth: rotation === 90 || rotation === 270 ? '70vh' : '100%',
-              maxHeight: rotation === 90 || rotation === 270 ? '90vw' : '100%',
-              transform: `scale(${zoom}) rotate(${rotation}deg)`,
-            }}
-          >
-            <Image
-              src={photos[currentIndex]}
-              alt={`Photo ${currentIndex + 1}`}
-              fill
-              className="object-contain"
-              unoptimized
-              priority
-              draggable={false}
-            />
-          </div>
+        {/* Photo with transform */}
+        <div
+          className="relative transition-transform duration-200"
+          style={{
+            width: isSideways ? "70vh" : "100vw",
+            height: isSideways ? "100vw" : "70vh",
+            maxWidth: isSideways ? "70vh" : "100vw",
+            maxHeight: isSideways ? "100vw" : "70vh",
+            transform: `scale(${zoom}) rotate(${rotation}deg)`,
+          }}
+        >
+          <Image
+            src={photos[currentIndex]}
+            alt={`Photo ${currentIndex + 1}`}
+            fill
+            className="object-contain"
+            unoptimized
+            priority
+            draggable={false}
+          />
         </div>
       </div>
 
-      {/* Bottom hint */}
-      <div className="text-center py-3 text-white/50 text-xs sm:text-sm">
-        <span className="hidden sm:inline">
-          Use arrow keys to navigate · +/- to zoom · R to rotate · Esc to close
-        </span>
-        <span className="sm:hidden">Tap outside to close</span>
+      {/* Bottom controls bar - always at bottom, easy thumb access */}
+      <div className="bg-black/80 px-4 py-3 safe-area-inset-bottom">
+        <div className="flex items-center justify-center gap-3">
+          {/* Zoom out */}
+          <button
+            onClick={handleZoomOut}
+            disabled={zoom <= 0.5}
+            className="p-3 rounded-full bg-white/10 text-white active:bg-white/20 disabled:opacity-40"
+          >
+            <ZoomOut className="h-5 w-5" />
+          </button>
+
+          {/* Zoom indicator */}
+          <span className="text-white text-sm font-medium min-w-[50px] text-center">
+            {Math.round(zoom * 100)}%
+          </span>
+
+          {/* Zoom in */}
+          <button
+            onClick={handleZoomIn}
+            disabled={zoom >= 3}
+            className="p-3 rounded-full bg-white/10 text-white active:bg-white/20 disabled:opacity-40"
+          >
+            <ZoomIn className="h-5 w-5" />
+          </button>
+
+          {/* Divider */}
+          <div className="w-px h-6 bg-white/20 mx-1" />
+
+          {/* Rotate */}
+          <button
+            onClick={handleRotate}
+            className="p-3 rounded-full bg-white/10 text-white active:bg-white/20"
+          >
+            <RotateCw className="h-5 w-5" />
+          </button>
+
+          {/* Delete */}
+          {onDelete && (
+            <>
+              <div className="w-px h-6 bg-white/20 mx-1" />
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="p-3 rounded-full bg-red-500/80 text-white active:bg-red-600 disabled:opacity-50"
+              >
+                {deleting ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Trash2 className="h-5 w-5" />
+                )}
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
