@@ -1,7 +1,7 @@
 import { Tabs } from "@/components/ui/tabs";
 import { Calendar } from "@/components/schedule/Calendar";
+import { OverviewTable } from "@/components/schedule/OverviewTable";
 import { prisma } from "@/lib/prisma";
-import { CheckCircle2, CircleDot } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -677,62 +677,8 @@ export default async function SchedulePage() {
         </div>
       </div>
 
-      {/* All Loads Table - Complete View */}
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">All Loads</h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b-2 border-gray-200">
-                <th className="text-left py-3 px-2 font-semibold text-gray-600">#</th>
-                <th className="text-left py-3 px-2 font-semibold text-gray-600">Date</th>
-                <th className="text-left py-3 px-2 font-semibold text-gray-600">VR Number</th>
-                <th className="text-left py-3 px-2 font-semibold text-gray-600">Status</th>
-                <th className="text-left py-3 px-2 font-semibold text-gray-600">Notes</th>
-              </tr>
-            </thead>
-            <tbody>
-              {allLoads.map((load) => (
-                <tr
-                  key={load.id}
-                  className={`border-b border-gray-100 ${load.isToday ? "bg-blue-50" : load.isDelivered ? "bg-gray-50" : ""}`}
-                >
-                  <td className="py-3 px-2 text-gray-400 font-mono">{load.loadNumber}</td>
-                  <td className="py-3 px-2">
-                    <span className={load.isToday ? "font-bold text-blue-700" : load.isDelivered ? "text-gray-700" : "font-medium text-gray-900"}>
-                      {load.dateStr}
-                    </span>
-                    {load.isToday && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">TODAY</span>}
-                  </td>
-                  <td className="py-3 px-2 font-mono">
-                    {load.vrNumber ? (
-                      <span className="text-gray-900">{load.vrNumber}</span>
-                    ) : (
-                      <span className="text-gray-400 italic">Pending</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-2">
-                    {load.isDelivered ? (
-                      <span className="inline-flex items-center text-emerald-700 font-medium">
-                        <CheckCircle2 className="h-4 w-4 mr-1" />
-                        {load.statusTag === "moved" ? "Delivered (moved)" : "Delivered"}
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center text-amber-600 font-medium">
-                        <CircleDot className="h-4 w-4 mr-1" />
-                        Scheduled
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3 px-2 text-gray-500 text-xs">
-                    {load.note || (load.eta ? `ETA ${load.eta}` : "")}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* All Loads Table with Toggle */}
+      <OverviewTable loads={allLoads} tonsPerLoad={20} />
 
       {/* Closed Days - Simple Notice */}
       <div className="text-sm text-gray-500 border-t pt-4">

@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Truck, Package } from "lucide-react";
+import { ChevronLeft, ChevronRight, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import Link from "next/link";
 
 interface CalendarProps {
   intakes?: Array<{
@@ -114,57 +113,62 @@ export function Calendar({ intakes = [] }: CalendarProps) {
   });
 
   const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const daysOfWeekShort = ["S", "M", "T", "W", "T", "F", "S"];
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="border-0 shadow-none sm:border sm:shadow-sm">
+      <CardHeader className="px-2 sm:px-6 pb-2 sm:pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle>{monthYear}</CardTitle>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handlePrevMonth}>
+          <CardTitle className="text-base sm:text-xl">{monthYear}</CardTitle>
+          <div className="flex gap-1 sm:gap-2">
+            <Button variant="outline" size="sm" onClick={handlePrevMonth} className="h-8 w-8 p-0">
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button
               variant={currentDate.getMonth() === today.getMonth() && currentDate.getFullYear() === today.getFullYear() ? "default" : "outline"}
               size="sm"
               onClick={handleToday}
-              className="text-xs"
+              className="text-xs h-8 px-2"
             >
               Today
             </Button>
-            <Button variant="outline" size="sm" onClick={handleNextMonth}>
+            <Button variant="outline" size="sm" onClick={handleNextMonth} className="h-8 w-8 p-0">
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        {/* Day headers */}
-        <div className="grid grid-cols-7 gap-1 mb-2">
-          {daysOfWeek.map((day) => (
-            <div key={day} className="text-center text-sm font-semibold text-gray-600 py-2">
-              {day}
+      <CardContent className="px-1 sm:px-6">
+        {/* Day headers - abbreviated on mobile */}
+        <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-1 sm:mb-2">
+          {daysOfWeek.map((day, i) => (
+            <div key={day} className="text-center text-xs sm:text-sm font-semibold text-gray-600 py-1 sm:py-2">
+              <span className="hidden sm:inline">{day}</span>
+              <span className="sm:hidden">{daysOfWeekShort[i]}</span>
             </div>
           ))}
         </div>
 
         {/* Calendar grid */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
           {calendarDays.map((day, index) => {
             const isTodayDate = isToday(day);
             const isPastDate = isPast(day);
             const hasIntakes = day !== null && intakesByDay[day]?.length > 0;
+            const intakeCount = day !== null ? intakesByDay[day]?.length || 0 : 0;
 
             return (
               <div
                 key={index}
+                onClick={() => day !== null && hasIntakes && setSelectedDay(day)}
                 className={`
-                  min-h-[100px] p-2 rounded-lg border text-sm
+                  min-h-[48px] sm:min-h-[100px] p-1 sm:p-2 rounded sm:rounded-lg border text-sm
+                  ${hasIntakes ? "cursor-pointer" : ""}
                   ${
                     day === null
                       ? "bg-gray-50 border-gray-100"
                       : isTodayDate
-                        ? "bg-emerald-100 border-emerald-300 font-bold"
+                        ? "bg-blue-100 border-blue-300 font-bold"
                         : isPastDate
                           ? "bg-gray-50 border-gray-200 text-gray-400"
                           : hasIntakes
@@ -175,38 +179,52 @@ export function Calendar({ intakes = [] }: CalendarProps) {
               >
                 {day && (
                   <>
+                    {/* Day number - smaller on mobile */}
                     <div
                       className={`
-                        text-lg font-semibold mb-1
-                        ${isTodayDate ? "text-emerald-700" : "text-gray-800"}
+                        text-sm sm:text-lg font-semibold
+                        ${isTodayDate ? "text-blue-700" : isPastDate ? "text-gray-400" : "text-gray-800"}
                       `}
                     >
                       <div className="flex items-center justify-between">
                         <span>{day}</span>
-                        {hasIntakes && <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" aria-label="Has intakes" />}
+                        {/* Mobile: show count badge */}
+                        {hasIntakes && (
+                          <span className="sm:hidden inline-flex items-center justify-center h-4 w-4 text-[10px] font-bold rounded-full bg-emerald-500 text-white">
+                            {intakeCount}
+                          </span>
+                        )}
+                        {/* Desktop: show dot */}
+                        {hasIntakes && <span className="hidden sm:inline-block h-2 w-2 rounded-full bg-emerald-500" aria-label="Has intakes" />}
                       </div>
                     </div>
 
-                    {/* Intakes for this day */}
-                    <div className="space-y-1">
+                    {/* Intakes for this day - hidden on mobile, show on desktop */}
+                    <div className="hidden sm:block space-y-1 mt-1">
                       {intakesByDay[day]?.slice(0, 2).map((intake) => (
-                        <Link key={intake.id} href={`/intakes/${intake.id}`}>
-                          <div className="text-xs bg-emerald-50 text-emerald-700 p-1.5 rounded hover:bg-emerald-100 cursor-pointer transition-colors">
-                            <div className="font-mono text-[10px] font-semibold truncate">{intake.ticketNumber}</div>
-                            {intake.vrNumber && <div className="truncate text-[10px] font-semibold">VR {intake.vrNumber}</div>}
-                            {(() => {
-                              const pill = getStatusPill(intake.statusTag ?? null);
-                              return pill ? (
-                                <div className={`inline-flex rounded px-1.5 py-0.5 text-[9px] font-bold ${pill.className}`}>{pill.label}</div>
-                              ) : null;
-                            })()}
-                            {/* Intentionally omit weight/tons in public view */}
-                          </div>
-                        </Link>
+                        <div
+                          key={intake.id}
+                          className="text-xs bg-emerald-50 text-emerald-700 p-1.5 rounded hover:bg-emerald-100 cursor-pointer transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedDay(day);
+                          }}
+                        >
+                          {intake.vrNumber && <div className="truncate text-[10px] font-semibold">VR {intake.vrNumber}</div>}
+                          {(() => {
+                            const pill = getStatusPill(intake.statusTag ?? null);
+                            return pill ? (
+                              <div className={`inline-flex rounded px-1.5 py-0.5 text-[9px] font-bold ${pill.className}`}>{pill.label}</div>
+                            ) : null;
+                          })()}
+                        </div>
                       ))}
                       {intakesByDay[day]?.length > 2 && (
                         <button
-                          onClick={() => setSelectedDay(day)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedDay(day);
+                          }}
                           className="w-full text-xs text-emerald-600 font-semibold px-1 hover:underline cursor-pointer"
                         >
                           +{intakesByDay[day].length - 2} more
@@ -221,24 +239,27 @@ export function Calendar({ intakes = [] }: CalendarProps) {
         </div>
 
         {/* Legend */}
-        <div className="mt-6 pt-4 border-t text-xs text-gray-600 flex gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-emerald-100 border border-emerald-300 rounded"></div>
-            <span>Today</span>
+        <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t text-xs text-gray-600">
+          <div className="flex flex-wrap gap-3 sm:gap-4">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-100 border border-blue-300 rounded"></div>
+              <span>Today</span>
+            </div>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="w-3 h-3 sm:w-4 sm:h-4 bg-emerald-50 border border-emerald-300 rounded"></div>
+              <span>Has deliveries</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-emerald-50 border border-emerald-300 rounded"></div>
-            <span>Has intakes</span>
-          </div>
+          <p className="sm:hidden text-gray-400 mt-2">Tap a day to see delivery details</p>
         </div>
       </CardContent>
 
       {/* Day Detail Dialog */}
       <Dialog open={selectedDay !== null} onOpenChange={() => setSelectedDay(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto mx-2 sm:mx-auto rounded-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center">
-              <Truck className="h-5 w-5 mr-2 text-emerald-600" />
+            <DialogTitle className="flex items-center text-base sm:text-lg">
+              <Truck className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-emerald-600" />
               {selectedDay && (
                 <>
                   {currentDate.toLocaleDateString("en-US", { month: "long" })} {selectedDay}, {currentDate.getFullYear()}
@@ -246,49 +267,52 @@ export function Calendar({ intakes = [] }: CalendarProps) {
               )}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-3 mt-4">
+          <div className="space-y-2 sm:space-y-3 mt-2 sm:mt-4">
             {selectedDay &&
               intakesByDay[selectedDay]?.map((intake) => {
+                const pill = getStatusPill(intake.statusTag ?? null);
                 return (
-                  <Link key={intake.id} href={`/intakes/${intake.id}`}>
-                    <div className="border rounded-lg p-4 hover:bg-emerald-50 transition-colors cursor-pointer">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-mono text-sm font-semibold text-emerald-600">{intake.ticketNumber}</span>
-                            {intake.vrNumber && (
-                              <span className="text-xs font-semibold text-purple-700 bg-purple-100 px-2 py-0.5 rounded">VR {intake.vrNumber}</span>
-                            )}
-                            {(() => {
-                              const pill = getStatusPill(intake.statusTag ?? null);
-                              return pill ? (
-                                <span className={`text-xs font-semibold px-2 py-0.5 rounded ${pill.className}`}>{pill.label}</span>
-                              ) : null;
-                            })()}
-                          </div>
-                          <p className="font-medium text-gray-900">{intake.client.companyName}</p>
-                          {(intake.eta || intake.note) && (
-                            <p className="text-xs text-gray-600 mt-1">
-                              {intake.eta ? `ETA ${intake.eta}` : ""}
-                              {intake.eta && intake.note ? " · " : ""}
-                              {intake.note ?? ""}
-                            </p>
+                  <div key={intake.id} className="border rounded-lg p-3 sm:p-4 bg-white">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                      <div className="flex-1">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          {intake.vrNumber && (
+                            <span className="text-xs font-semibold text-gray-900 bg-gray-100 px-2 py-0.5 rounded font-mono">
+                              VR {intake.vrNumber}
+                            </span>
                           )}
-                          {intake.scheduledTimeWindow && <p className="text-sm text-gray-500 mt-1">{intake.scheduledTimeWindow}</p>}
+                          {pill && (
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded ${pill.className}`}>{pill.label}</span>
+                          )}
                         </div>
-                        {/* Intentionally omit weight/tons in public view */}
+                        <p className="font-medium text-gray-900 text-sm sm:text-base">{intake.client.companyName}</p>
+                        {(intake.eta || intake.note) && (
+                          <p className="text-xs text-gray-600 mt-1">
+                            {intake.eta ? `ETA ${intake.eta}` : ""}
+                            {intake.eta && intake.note ? " · " : ""}
+                            {intake.note ?? ""}
+                          </p>
+                        )}
+                        {intake.scheduledTimeWindow && (
+                          <p className="text-xs sm:text-sm text-gray-500 mt-1">{intake.scheduledTimeWindow}</p>
+                        )}
                       </div>
+                      <div className="text-sm font-medium text-gray-700">20 tons</div>
                     </div>
-                  </Link>
+                  </div>
                 );
               })}
             {selectedDay && intakesByDay[selectedDay] && (
               <div className="border-t pt-3 mt-3">
                 <div className="flex justify-between items-center bg-emerald-50 p-3 rounded-lg">
-                  <span className="font-semibold text-emerald-900">Total for Day:</span>
-                  <div className="flex items-center">
-                    <Package className="h-5 w-5 mr-2 text-emerald-600" />
-                    <span className="text-sm font-semibold text-emerald-900">VR loads: {intakesByDay[selectedDay].length}</span>
+                  <span className="font-semibold text-emerald-900 text-sm sm:text-base">Day Total:</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold text-emerald-900">
+                      {intakesByDay[selectedDay].length} loads
+                    </span>
+                    <span className="text-sm font-bold text-emerald-700">
+                      {intakesByDay[selectedDay].length * 20} tons
+                    </span>
                   </div>
                 </div>
               </div>
