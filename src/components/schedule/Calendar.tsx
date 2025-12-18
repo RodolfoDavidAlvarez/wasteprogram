@@ -286,9 +286,7 @@ export function Calendar({ intakes = [] }: CalendarProps) {
                               VR {intake.vrNumber}
                             </span>
                           )}
-                          {pill && (
-                            <span className={`text-xs font-semibold px-2 py-0.5 rounded ${pill.className}`}>{pill.label}</span>
-                          )}
+                          {pill && <span className={`text-xs font-semibold px-2 py-0.5 rounded ${pill.className}`}>{pill.label}</span>}
                         </div>
                         <p className="font-medium text-gray-900 text-sm sm:text-base">{intake.client.companyName}</p>
                         {(intake.eta || intake.note) && (
@@ -298,9 +296,7 @@ export function Calendar({ intakes = [] }: CalendarProps) {
                             {intake.note ?? ""}
                           </p>
                         )}
-                        {intake.scheduledTimeWindow && (
-                          <p className="text-xs sm:text-sm text-gray-500 mt-1">{intake.scheduledTimeWindow}</p>
-                        )}
+                        {intake.scheduledTimeWindow && <p className="text-xs sm:text-sm text-gray-500 mt-1">{intake.scheduledTimeWindow}</p>}
                       </div>
                       <div className="text-sm font-medium text-gray-700">20 tons</div>
                     </div>
@@ -312,12 +308,8 @@ export function Calendar({ intakes = [] }: CalendarProps) {
                 <div className="flex justify-between items-center bg-emerald-50 p-3 rounded-lg">
                   <span className="font-semibold text-emerald-900 text-sm sm:text-base">Day Total:</span>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-emerald-900">
-                      {intakesByDay[selectedDay].length} loads
-                    </span>
-                    <span className="text-sm font-bold text-emerald-700">
-                      {intakesByDay[selectedDay].length * 20} tons
-                    </span>
+                    <span className="text-sm font-semibold text-emerald-900">{intakesByDay[selectedDay].length} loads</span>
+                    <span className="text-sm font-bold text-emerald-700">{intakesByDay[selectedDay].length * 20} tons</span>
                   </div>
                 </div>
               </div>

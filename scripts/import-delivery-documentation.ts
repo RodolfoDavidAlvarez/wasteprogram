@@ -26,10 +26,7 @@ type ImportItem = {
   vrNumber: string; // e.g. "121725-41"
 };
 
-const DELIVERY_DOCS_DIR = path.resolve(
-  __dirname,
-  "../../Deliveries Documentation"
-);
+const DELIVERY_DOCS_DIR = path.resolve(__dirname, "../../Deliveries Documentation");
 
 // Mapping derived from the provided photos (highlighted #VR... on the forms)
 const ITEMS: ImportItem[] = [
@@ -71,20 +68,16 @@ async function uploadFileToDeliveryPhotos(filePath: string, vrNumber: string) {
 
   const objectPath = `${vrNumber}/${Date.now()}-${base}`;
 
-  const { error } = await supabase.storage
-    .from(STORAGE_BUCKETS.DELIVERY_PHOTOS)
-    .upload(objectPath, buf, {
-      contentType: contentTypeForExt(ext),
-      upsert: false,
-    });
+  const { error } = await supabase.storage.from(STORAGE_BUCKETS.DELIVERY_PHOTOS).upload(objectPath, buf, {
+    contentType: contentTypeForExt(ext),
+    upsert: false,
+  });
 
   if (error) {
     throw new Error(`Upload failed for ${base}: ${error.message}`);
   }
 
-  const { data: urlData } = supabase.storage
-    .from(STORAGE_BUCKETS.DELIVERY_PHOTOS)
-    .getPublicUrl(objectPath);
+  const { data: urlData } = supabase.storage.from(STORAGE_BUCKETS.DELIVERY_PHOTOS).getPublicUrl(objectPath);
 
   return urlData.publicUrl;
 }
@@ -113,11 +106,7 @@ async function main() {
 
     // Ensure record exists (use Supabase REST via service role; avoids Prisma DATABASE_URL issues)
     const scheduledDate = guessScheduledDateFromVr(vrNumber);
-    const { data: existingRows, error: existingErr } = await supabase
-      .from("wd_delivery_records")
-      .select("*")
-      .eq("vrNumber", vrNumber)
-      .limit(1);
+    const { data: existingRows, error: existingErr } = await supabase.from("wd_delivery_records").select("*").eq("vrNumber", vrNumber).limit(1);
 
     if (existingErr) throw new Error(`Failed to read record ${vrNumber}: ${existingErr.message}`);
 
@@ -140,10 +129,7 @@ async function main() {
       });
       if (insertErr) throw new Error(`Failed to insert record ${vrNumber}: ${insertErr.message}`);
     } else {
-      const { error: touchErr } = await supabase
-        .from("wd_delivery_records")
-        .update({ updatedAt: new Date().toISOString() })
-        .eq("vrNumber", vrNumber);
+      const { error: touchErr } = await supabase.from("wd_delivery_records").update({ updatedAt: new Date().toISOString() }).eq("vrNumber", vrNumber);
       if (touchErr) throw new Error(`Failed to update record ${vrNumber}: ${touchErr.message}`);
     }
 
@@ -154,9 +140,7 @@ async function main() {
     // Append URL
     const currentRows = existingRow
       ? [existingRow]
-      : (
-          await supabase.from("wd_delivery_records").select("*").eq("vrNumber", vrNumber).limit(1)
-        ).data ?? [];
+      : ((await supabase.from("wd_delivery_records").select("*").eq("vrNumber", vrNumber).limit(1)).data ?? []);
     const current = currentRows[0];
     const existing: string[] = current?.photoUrls ? JSON.parse(current.photoUrls) : [];
     if (!existing.includes(url)) {

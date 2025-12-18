@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { CheckCircle2, Clock, Truck, ChevronLeft, ChevronRight, Camera, Image as ImageIcon, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -30,6 +31,7 @@ type DeliveryRecordUi = {
 };
 
 export function TodayView({ allLoads }: TodayViewProps) {
+  const router = useRouter();
   const [selectedLoad, setSelectedLoad] = useState<LoadItem | null>(null);
   const [dayOffset, setDayOffset] = useState(0);
   const [deliveryRecord, setDeliveryRecord] = useState<DeliveryRecordUi | null>(null);
@@ -229,12 +231,8 @@ export function TodayView({ allLoads }: TodayViewProps) {
         /* No loads for selected day */
         <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
           <Truck className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-          <p className="text-gray-500 font-medium">
-            No deliveries scheduled for {dayOffset === 0 ? "today" : dateStr}
-          </p>
-          <p className="text-sm text-gray-400 mt-1">
-            Use the arrows to check other days or see the Overview tab
-          </p>
+          <p className="text-gray-500 font-medium">No deliveries scheduled for {dayOffset === 0 ? "today" : dateStr}</p>
+          <p className="text-sm text-gray-400 mt-1">Use the arrows to check other days or see the Overview tab</p>
         </div>
       ) : (
         <>
@@ -258,7 +256,13 @@ export function TodayView({ allLoads }: TodayViewProps) {
             {loads.map((load) => (
               <div
                 key={load.id}
-                onClick={() => setSelectedLoad(load)}
+                onClick={() => {
+                  if (load.vrNumber) {
+                    router.push(`/schedule/records/${encodeURIComponent(load.vrNumber)}`);
+                    return;
+                  }
+                  setSelectedLoad(load);
+                }}
                 className={`rounded-xl border-2 p-4 transition-all cursor-pointer active:scale-[0.99] ${
                   load.isDelivered
                     ? "bg-emerald-50 border-emerald-300 hover:border-emerald-400"
@@ -295,9 +299,7 @@ export function TodayView({ allLoads }: TodayViewProps) {
                     </div>
 
                     {/* Notes */}
-                    {load.note && (
-                      <p className="text-xs sm:text-sm text-gray-500 mt-2">{load.note}</p>
-                    )}
+                    {load.note && <p className="text-xs sm:text-sm text-gray-500 mt-2">{load.note}</p>}
                   </div>
 
                   {/* Load Number & Status Badge */}
@@ -340,9 +342,7 @@ export function TodayView({ allLoads }: TodayViewProps) {
       >
         <DialogContent className="max-w-md mx-2 sm:mx-auto rounded-xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold">
-              {selectedLoad?.vrNumber ? `VR ${selectedLoad.vrNumber}` : "Load Details"}
-            </DialogTitle>
+            <DialogTitle className="text-lg font-bold">{selectedLoad?.vrNumber ? `VR ${selectedLoad.vrNumber}` : "Load Details"}</DialogTitle>
           </DialogHeader>
 
           {selectedLoad && (
@@ -355,9 +355,7 @@ export function TodayView({ allLoads }: TodayViewProps) {
                 </div>
                 <div className="flex justify-between items-center py-2 border-b">
                   <span className="text-gray-500">VR Number</span>
-                  <span className="font-mono font-bold text-gray-900">
-                    {selectedLoad.vrNumber || "Pending"}
-                  </span>
+                  <span className="font-mono font-bold text-gray-900">{selectedLoad.vrNumber || "Pending"}</span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b">
                   <span className="text-gray-500">Status</span>
@@ -389,9 +387,7 @@ export function TodayView({ allLoads }: TodayViewProps) {
                   <CheckCircle2 className="h-8 w-8 text-emerald-600 mx-auto mb-2" />
                   <p className="font-semibold text-emerald-700">This load has been delivered</p>
                   {deliveryRecord?.deliveredAt && (
-                    <p className="text-xs text-emerald-600 mt-1">
-                      {new Date(deliveryRecord.deliveredAt).toLocaleString()}
-                    </p>
+                    <p className="text-xs text-emerald-600 mt-1">{new Date(deliveryRecord.deliveredAt).toLocaleString()}</p>
                   )}
                 </div>
               ) : (
@@ -404,11 +400,7 @@ export function TodayView({ allLoads }: TodayViewProps) {
                       disabled={uploading || !selectedLoad.vrNumber}
                       className="py-3 px-4 rounded-lg bg-blue-50 border-2 border-blue-200 text-blue-700 font-semibold flex items-center justify-center gap-2 hover:bg-blue-100 active:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
-                      {uploading ? (
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                      ) : (
-                        <Camera className="h-5 w-5" />
-                      )}
+                      {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />}
                       <span className="text-sm">Take Photo</span>
                     </button>
 
@@ -419,21 +411,12 @@ export function TodayView({ allLoads }: TodayViewProps) {
                       className="py-3 px-4 rounded-lg bg-gray-50 border-2 border-gray-200 text-gray-700 font-semibold flex items-center justify-center gap-2 hover:bg-gray-100 active:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <ImageIcon className="h-5 w-5" />
-                      <span className="text-sm">
-                        Photos {photos.length > 0 && `(${photos.length})`}
-                      </span>
+                      <span className="text-sm">Photos {photos.length > 0 && `(${photos.length})`}</span>
                     </button>
                   </div>
 
                   {/* Hidden file input */}
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
+                  <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileSelect} className="hidden" />
 
                   {/* Mark as Delivered Button */}
                   <button
@@ -454,9 +437,7 @@ export function TodayView({ allLoads }: TodayViewProps) {
                     )}
                   </button>
 
-                  <p className="text-xs text-gray-500 text-center">
-                    Photos are optional. You can mark as delivered without documentation.
-                  </p>
+                  <p className="text-xs text-gray-500 text-center">Photos are optional. You can mark as delivered without documentation.</p>
                 </div>
               )}
             </div>
@@ -479,9 +460,7 @@ export function TodayView({ allLoads }: TodayViewProps) {
                   className="w-full h-auto rounded-lg border-2 border-gray-200 cursor-pointer hover:border-blue-400 transition-colors"
                   onClick={() => window.open(photoUrl, "_blank")}
                 />
-                <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                  Photo {index + 1}
-                </div>
+                <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">Photo {index + 1}</div>
               </div>
             ))}
           </div>

@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       success: true,
       photoUrl,
       totalPhotos: existingPhotos.length,
-      record: updatedRecord
+      record: updatedRecord,
     });
   } catch (error: unknown) {
     console.error("Error uploading photo:", error);

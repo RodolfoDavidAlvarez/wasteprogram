@@ -30,7 +30,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       record: {
         ...record,
         photoUrls,
-      }
+      },
     });
   } catch (error: unknown) {
     console.error("Error fetching delivery record:", error);
