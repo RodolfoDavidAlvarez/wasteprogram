@@ -3,6 +3,8 @@ import { Calendar } from "@/components/schedule/Calendar";
 import { OverviewTable } from "@/components/schedule/OverviewTable";
 import { TodayView } from "@/components/schedule/TodayView";
 import { prisma } from "@/lib/prisma";
+import Image from "next/image";
+import { ScheduleTheme } from "./ScheduleTheme";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -654,7 +656,7 @@ export default async function SchedulePage() {
       </div>
 
       {/* Project Info - Clean Grid */}
-      <div className="bg-white border rounded-lg p-6">
+      <div className="bg-card border border-border rounded-lg p-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
           <div>
             <div className="text-gray-500 uppercase text-xs tracking-wide mb-1">Client</div>
@@ -689,39 +691,60 @@ export default async function SchedulePage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen schedule-theme app-background">
+      <ScheduleTheme />
       {/* Clean Header */}
-      <div className="bg-white border-b">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
-          <div className="flex items-center gap-3 mb-2">
-            <img src="/ssw-logo.png" alt="Soil Seed & Water" className="h-10 sm:h-12 w-auto" />
+      <div className="relative border-b border-border bg-background/75 backdrop-blur">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-primary via-[hsl(var(--ring))] to-transparent"
+        />
+	        <div className="px-4 sm:px-6 py-4 sm:py-6">
+	          <div className="flex items-center gap-3 mb-2">
+	            <div className="inline-flex items-center rounded-lg bg-card shadow-sm ring-1 ring-black/5 px-3 py-2">
+	              <div className="relative h-10 sm:h-12 aspect-[2083/729]">
+	                <Image
+	                  src="/ssw-logo.png"
+	                  alt="Soil Seed & Water"
+	                  fill
+	                  priority
+	                  unoptimized
+	                  sizes="(min-width: 640px) 137px, 114px"
+	                  className="object-contain"
+	                />
+	              </div>
+	            </div>
+	          </div>
+          <div className="max-w-5xl">
+            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">Waste Scheduled Delivery</h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-1">Vanguard / Purina Dog Food - Flagstaff</p>
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Waste Scheduled Delivery</h1>
-          <p className="text-sm sm:text-base text-gray-500 mt-1">Vanguard / Purina Dog Food - Flagstaff</p>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
-        <Tabs
-          tabs={[
-            {
-              label: "Today",
-              value: "today",
-              content: <TodayView allLoads={allLoads} />,
-            },
-            {
-              label: "Overview",
-              value: "summary",
-              content: summaryContent,
-            },
-            {
-              label: "Calendar",
-              value: "calendar",
-              content: <Calendar intakes={data.calendarIntakes} />,
-            },
-          ]}
-        />
+        <div className="rounded-2xl border border-border bg-card/80 backdrop-blur shadow-sm p-3 sm:p-4">
+          <Tabs
+            tabs={[
+              {
+                label: "Today",
+                value: "today",
+                content: <TodayView allLoads={allLoads} />,
+              },
+              {
+                label: "Overview",
+                value: "summary",
+                content: summaryContent,
+              },
+              {
+                label: "Calendar",
+                value: "calendar",
+                content: <Calendar intakes={data.calendarIntakes} />,
+              },
+            ]}
+          />
+        </div>
       </div>
     </div>
   );
