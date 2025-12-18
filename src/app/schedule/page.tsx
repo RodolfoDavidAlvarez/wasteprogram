@@ -434,10 +434,9 @@ function getManualSchedule(): {
 }
 
 async function getScheduleData() {
-  // Allow public schedule page to deploy before DB is configured.
-  if (!process.env.DATABASE_URL) {
-    return getManualSchedule();
-  }
+  // ALWAYS use manual schedule for Vanguard/Purina project tracking
+  // TODO: Switch to DB once production DATABASE_URL is configured
+  return getManualSchedule();
 
   const now = new Date();
   const startOfWeek = new Date(now);
