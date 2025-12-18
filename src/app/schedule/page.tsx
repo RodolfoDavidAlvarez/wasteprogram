@@ -1,12 +1,7 @@
-import Link from "next/link";
-import { Header } from "@/components/layout/Header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs";
 import { Calendar } from "@/components/schedule/Calendar";
 import { prisma } from "@/lib/prisma";
-import { formatDate, INTAKE_STATUSES } from "@/lib/utils";
-import { Calendar as CalendarIcon, Truck, MapPin, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { CheckCircle2, CircleDot } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -65,7 +60,8 @@ function getManualSchedule(): {
   const date = (day: number) => new Date(y, m, day);
 
   // =============================================================================
-  // NESTLE DOG FOOD LOADS (Original 9 + 2 additional = 11 loads)
+  // VANGUARD / NESTLE PURINA DOG FOOD LOADS - FLAGSTAFF ORIGIN
+  // Total: 23 loads (9 original + 2 extension + 12 additional)
   // Source: Casey Tucker <ctucker@vanguardrenewables.com>
   // Material: Off-spec dog/cat food (Salmonella-contaminated), bags on slip sheets
   // =============================================================================
@@ -79,7 +75,7 @@ function getManualSchedule(): {
       scheduledTimeWindow: "11:00-14:00",
       eta: "12:00",
       estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      client: { companyName: "Vanguard (Purina/Flagstaff)", accountNumber: "" },
       statusTag: "arrived",
       status: "scheduled",
       deliveryType: "client_delivery",
@@ -93,7 +89,7 @@ function getManualSchedule(): {
       scheduledTimeWindow: "11:00-14:00",
       eta: "13:00",
       estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      client: { companyName: "Vanguard (Purina/Flagstaff)", accountNumber: "" },
       statusTag: "arrived",
       status: "scheduled",
       deliveryType: "client_delivery",
@@ -108,7 +104,7 @@ function getManualSchedule(): {
       scheduledDate: date(12),
       scheduledTimeWindow: "11:00-14:30",
       estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      client: { companyName: "Vanguard (Purina/Flagstaff)", accountNumber: "" },
       statusTag: "arrived",
       status: "scheduled",
       deliveryType: "client_delivery",
@@ -121,7 +117,7 @@ function getManualSchedule(): {
       scheduledDate: date(12),
       scheduledTimeWindow: "11:00-14:30",
       estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      client: { companyName: "Vanguard (Purina/Flagstaff)", accountNumber: "" },
       statusTag: "arrived",
       status: "scheduled",
       deliveryType: "client_delivery",
@@ -136,7 +132,7 @@ function getManualSchedule(): {
       scheduledDate: date(15),
       scheduledTimeWindow: "06:00-14:30",
       estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      client: { companyName: "Vanguard (Purina/Flagstaff)", accountNumber: "" },
       statusTag: "arrived",
       status: "scheduled",
       deliveryType: "client_delivery",
@@ -151,7 +147,7 @@ function getManualSchedule(): {
       scheduledDate: date(16),
       scheduledTimeWindow: "06:00-14:30",
       estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      client: { companyName: "Vanguard (Purina/Flagstaff)", accountNumber: "" },
       statusTag: "arrived",
       status: "scheduled",
       deliveryType: "client_delivery",
@@ -166,7 +162,7 @@ function getManualSchedule(): {
       eta: "14:20",
       note: "Arrived ~14:55",
       estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      client: { companyName: "Vanguard (Purina/Flagstaff)", accountNumber: "" },
       statusTag: "arrived",
       status: "scheduled",
       deliveryType: "client_delivery",
@@ -181,7 +177,7 @@ function getManualSchedule(): {
       scheduledDate: date(17),
       scheduledTimeWindow: "06:00-14:30",
       estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      client: { companyName: "Vanguard (Purina/Flagstaff)", accountNumber: "" },
       statusTag: "arrived",
       status: "scheduled",
       deliveryType: "client_delivery",
@@ -195,7 +191,7 @@ function getManualSchedule(): {
       scheduledTimeWindow: "06:00-14:30",
       note: "Additional load (making 11 total)",
       estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      client: { companyName: "Vanguard (Purina/Flagstaff)", accountNumber: "" },
       statusTag: "arrived",
       status: "scheduled",
       deliveryType: "client_delivery",
@@ -211,7 +207,7 @@ function getManualSchedule(): {
       eta: "15:00",
       note: "Delayed from 12/15 → delivered 12/17",
       estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      client: { companyName: "Vanguard (Purina/Flagstaff)", accountNumber: "" },
       statusTag: "moved",
       status: "scheduled",
       deliveryType: "client_delivery",
@@ -227,7 +223,7 @@ function getManualSchedule(): {
       scheduledTimeWindow: "06:00-14:30",
       note: "Additional load (making 11 total)",
       estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      client: { companyName: "Vanguard (Purina/Flagstaff)", accountNumber: "" },
       statusTag: "scheduled",
       status: "scheduled",
       deliveryType: "client_delivery",
@@ -235,26 +231,7 @@ function getManualSchedule(): {
     },
 
     // =============================================================================
-    // TYSON TOLLESON LOAD (Separate from Nestle project)
-    // Source: Casey Tucker email 12/17/2025
-    // =============================================================================
-    {
-      id: "vr-121825-90",
-      ticketNumber: "VR121825-90",
-      vrNumber: "121825-90",
-      scheduledDate: date(18),
-      scheduledTimeWindow: "06:00-14:30",
-      note: "Tyson Tolleson, AZ - separate from Nestle loads",
-      estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Tyson)", accountNumber: "" },
-      statusTag: "scheduled",
-      status: "scheduled",
-      deliveryType: "client_delivery",
-      wasteType: "food waste",
-    },
-
-    // =============================================================================
-    // 12 ADDITIONAL DOG FOOD LOADS (New batch - VR numbers pending from Casey)
+    // BATCH 3: 12 ADDITIONAL DOG FOOD LOADS (VR numbers pending from Casey)
     // Confirmed schedule per email 12/17/2025
     // Casey will send VR numbers once shipper confirms
     // =============================================================================
@@ -267,7 +244,7 @@ function getManualSchedule(): {
       scheduledTimeWindow: "06:00-14:30",
       note: "Additional dog food load #1 of 12 - VR# pending",
       estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      client: { companyName: "Vanguard (Purina/Flagstaff)", accountNumber: "" },
       statusTag: "scheduled",
       status: "scheduled",
       deliveryType: "client_delivery",
@@ -283,7 +260,7 @@ function getManualSchedule(): {
       scheduledTimeWindow: "06:00-14:30",
       note: "Additional dog food load #2 of 12 - VR# pending",
       estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      client: { companyName: "Vanguard (Purina/Flagstaff)", accountNumber: "" },
       statusTag: "scheduled",
       status: "scheduled",
       deliveryType: "client_delivery",
@@ -297,7 +274,7 @@ function getManualSchedule(): {
       scheduledTimeWindow: "06:00-14:30",
       note: "Additional dog food load #3 of 12 - VR# pending",
       estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      client: { companyName: "Vanguard (Purina/Flagstaff)", accountNumber: "" },
       statusTag: "scheduled",
       status: "scheduled",
       deliveryType: "client_delivery",
@@ -313,7 +290,7 @@ function getManualSchedule(): {
       scheduledTimeWindow: "06:00-14:30",
       note: "Additional dog food load #4 of 12 - VR# pending",
       estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      client: { companyName: "Vanguard (Purina/Flagstaff)", accountNumber: "" },
       statusTag: "scheduled",
       status: "scheduled",
       deliveryType: "client_delivery",
@@ -327,7 +304,7 @@ function getManualSchedule(): {
       scheduledTimeWindow: "06:00-14:30",
       note: "Additional dog food load #5 of 12 - VR# pending",
       estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      client: { companyName: "Vanguard (Purina/Flagstaff)", accountNumber: "" },
       statusTag: "scheduled",
       status: "scheduled",
       deliveryType: "client_delivery",
@@ -341,7 +318,7 @@ function getManualSchedule(): {
       scheduledTimeWindow: "06:00-14:30",
       note: "Additional dog food load #6 of 12 - VR# pending",
       estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      client: { companyName: "Vanguard (Purina/Flagstaff)", accountNumber: "" },
       statusTag: "scheduled",
       status: "scheduled",
       deliveryType: "client_delivery",
@@ -357,7 +334,7 @@ function getManualSchedule(): {
       scheduledTimeWindow: "06:00-14:30",
       note: "Additional dog food load #7 of 12 - VR# pending",
       estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      client: { companyName: "Vanguard (Purina/Flagstaff)", accountNumber: "" },
       statusTag: "scheduled",
       status: "scheduled",
       deliveryType: "client_delivery",
@@ -371,7 +348,7 @@ function getManualSchedule(): {
       scheduledTimeWindow: "06:00-14:30",
       note: "Additional dog food load #8 of 12 - VR# pending",
       estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      client: { companyName: "Vanguard (Purina/Flagstaff)", accountNumber: "" },
       statusTag: "scheduled",
       status: "scheduled",
       deliveryType: "client_delivery",
@@ -387,7 +364,7 @@ function getManualSchedule(): {
       scheduledTimeWindow: "06:00-14:30",
       note: "Additional dog food load #9 of 12 - VR# pending (Christmas Eve)",
       estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      client: { companyName: "Vanguard (Purina/Flagstaff)", accountNumber: "" },
       statusTag: "scheduled",
       status: "scheduled",
       deliveryType: "client_delivery",
@@ -403,7 +380,7 @@ function getManualSchedule(): {
       scheduledTimeWindow: "06:00-14:30",
       note: "Additional dog food load #10 of 12 - VR# pending",
       estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      client: { companyName: "Vanguard (Purina/Flagstaff)", accountNumber: "" },
       statusTag: "scheduled",
       status: "scheduled",
       deliveryType: "client_delivery",
@@ -417,7 +394,7 @@ function getManualSchedule(): {
       scheduledTimeWindow: "06:00-14:30",
       note: "Additional dog food load #11 of 12 - VR# pending",
       estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      client: { companyName: "Vanguard (Purina/Flagstaff)", accountNumber: "" },
       statusTag: "scheduled",
       status: "scheduled",
       deliveryType: "client_delivery",
@@ -431,7 +408,7 @@ function getManualSchedule(): {
       scheduledTimeWindow: "06:00-14:30",
       note: "Additional dog food load #12 of 12 - VR# pending",
       estimatedWeight: 0,
-      client: { companyName: "Vanguard Renewables (Nestle)", accountNumber: "" },
+      client: { companyName: "Vanguard (Purina/Flagstaff)", accountNumber: "" },
       statusTag: "scheduled",
       status: "scheduled",
       deliveryType: "client_delivery",
@@ -619,201 +596,170 @@ async function getScheduleData() {
   };
 }
 
-function getStatusBadge(status: string) {
-  const statusConfig = INTAKE_STATUSES.find((s) => s.value === status);
-  const color = statusConfig?.color || "bg-gray-100 text-gray-800";
-  const label = statusConfig?.label || status;
-
-  return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${color}`}>{label}</span>;
-}
-
 export default async function SchedulePage() {
   const data = await getScheduleData();
-  const now = new Date();
-  const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-  // Group intakes by day of week
-  const intakesByDay: Record<number, typeof data.weekIntakes> = {};
-  daysOfWeek.forEach((_, i) => {
-    intakesByDay[i] = [];
-  });
-  data.weekIntakes.forEach((intake) => {
-    const day = new Date(intake.scheduledDate).getDay();
-    intakesByDay[day].push(intake);
-  });
+  // Calculate summary stats
+  // Each load is ~44,000 lbs = ~22 tons (from Casey's emails)
+  const TONS_PER_LOAD = 22;
+  const totalLoads = data.calendarIntakes.length;
+  const deliveredLoads = data.calendarIntakes.filter((i) => i.statusTag === "arrived" || i.statusTag === "moved").length;
+  const scheduledLoads = totalLoads - deliveredLoads;
+  const tonsDelivered = deliveredLoads * TONS_PER_LOAD;
+  const tonsRemaining = scheduledLoads * TONS_PER_LOAD;
+  const totalTons = totalLoads * TONS_PER_LOAD;
 
-  const weekViewContent = (
-    <>
-      <div className="flex items-center space-x-2 mb-4">
-        <Button variant="outline" size="sm">
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <span className="text-sm font-medium px-4">Week of {formatDate(data.startOfWeek)}</span>
-        <Button variant="outline" size="sm">
-          <ChevronRight className="h-4 w-4" />
-        </Button>
+  // Build complete load list with all details
+  const allLoads = data.calendarIntakes
+    .sort((a, b) => +new Date(a.scheduledDate) - +new Date(b.scheduledDate))
+    .map((intake, idx) => {
+      const d = new Date(intake.scheduledDate);
+      const isDelivered = intake.statusTag === "arrived" || intake.statusTag === "moved";
+      const isPast = d < new Date(new Date().setHours(0, 0, 0, 0));
+      const isToday = d.toDateString() === new Date().toDateString();
+      return {
+        ...intake,
+        loadNumber: idx + 1,
+        dateStr: d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }),
+        isDelivered,
+        isPast,
+        isToday,
+      };
+    });
+
+  const summaryContent = (
+    <div className="space-y-8">
+      {/* Hero Stats - Big and Clear */}
+      <div className="grid grid-cols-3 gap-6">
+        <div className="text-center py-6 border-b-4 border-gray-200">
+          <div className="text-5xl font-bold text-gray-900">{totalLoads}</div>
+          <div className="text-sm text-gray-500 mt-1 uppercase tracking-wide">Total Loads</div>
+          <div className="text-lg text-gray-400 mt-1">{totalTons} tons</div>
+        </div>
+        <div className="text-center py-6 border-b-4 border-emerald-500">
+          <div className="text-5xl font-bold text-emerald-600">{deliveredLoads}</div>
+          <div className="text-sm text-gray-500 mt-1 uppercase tracking-wide">Delivered</div>
+          <div className="text-lg text-emerald-500 mt-1">{tonsDelivered} tons</div>
+        </div>
+        <div className="text-center py-6 border-b-4 border-amber-500">
+          <div className="text-5xl font-bold text-amber-600">{scheduledLoads}</div>
+          <div className="text-sm text-gray-500 mt-1 uppercase tracking-wide">Remaining</div>
+          <div className="text-lg text-amber-500 mt-1">{tonsRemaining} tons</div>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Week View</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-7 gap-2">
-            {daysOfWeek.map((day, index) => {
-              const dayDate = new Date(data.startOfWeek);
-              dayDate.setDate(data.startOfWeek.getDate() + index);
-              const isToday = dayDate.toDateString() === now.toDateString();
-              const dayIntakes = intakesByDay[index];
-
-              return (
-                <div key={day} className={`border rounded-lg p-2 min-h-[150px] ${isToday ? "bg-emerald-50 border-emerald-300" : ""}`}>
-                  <div className={`text-center text-sm font-medium mb-2 pb-2 border-b ${isToday ? "text-emerald-700" : "text-gray-600"}`}>
-                    {day}
-                    <br />
-                    <span className={`text-lg ${isToday ? "font-bold" : ""}`}>{dayDate.getDate()}</span>
-                  </div>
-                  <div className="space-y-1">
-                    {dayIntakes.map((intake) => (
-                      <Link key={intake.id} href={`/intakes/${intake.id}`}>
-                        <div className="text-xs bg-emerald-100 text-emerald-800 p-1 rounded truncate hover:bg-emerald-200">
-                          <Truck className="h-3 w-3 inline mr-1" />
-                          {intake.client.companyName}
-                        </div>
-                      </Link>
-                    ))}
-                    {dayIntakes.length === 0 && <p className="text-xs text-gray-400 text-center">-</p>}
-                  </div>
-                </div>
-              );
-            })}
+      {/* Project Info - Clean Grid */}
+      <div className="bg-white border rounded-lg p-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
+          <div>
+            <div className="text-gray-500 uppercase text-xs tracking-wide mb-1">Client</div>
+            <div className="font-semibold text-gray-900">Vanguard Renewables</div>
           </div>
-        </CardContent>
-      </Card>
-    </>
-  );
-
-  const todayContent = (
-    <Card className="border-emerald-200 bg-emerald-50">
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center text-emerald-800">
-          <CalendarIcon className="h-5 w-5 mr-2" />
-          Today - {formatDate(now)}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {data.todayIntakes.length === 0 ? (
-          <p className="text-emerald-700 text-center py-4">No pickups or deliveries scheduled for today</p>
-        ) : (
-          <div className="space-y-3">
-            {data.todayIntakes.map((intake) => (
-              <Link key={intake.id} href={`/intakes/${intake.id}`}>
-                <div className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-mono text-sm font-medium text-emerald-600">{intake.ticketNumber}</span>
-                        {getStatusBadge(intake.status ?? "scheduled")}
-                        <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded">
-                          {intake.deliveryType === "client_delivery" ? "Delivery" : "Pickup"}
-                        </span>
-                      </div>
-                      <p className="font-medium mt-1">{intake.client.companyName}</p>
-                      <div className="flex items-center text-sm text-gray-600 mt-1">
-                        <Clock className="h-4 w-4 mr-1" />
-                        {intake.scheduledTimeWindow || "All day"}
-                      </div>
-                      {intake.pickupAddress && (
-                        <div className="flex items-center text-sm text-gray-600 mt-1">
-                          <MapPin className="h-4 w-4 mr-1" />
-                          {intake.pickupAddress}
-                        </div>
-                      )}
-                    </div>
-                    {/* Intentionally omit weight/tons in public view */}
-                  </div>
-                </div>
-              </Link>
-            ))}
+          <div>
+            <div className="text-gray-500 uppercase text-xs tracking-wide mb-1">Origin</div>
+            <div className="font-semibold text-gray-900">Flagstaff, AZ</div>
           </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-
-  const upcomingContent = (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center">
-          <Truck className="h-5 w-5 mr-2 text-emerald-600" />
-          Upcoming (Next 30 Days)
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {data.upcomingIntakes.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No upcoming pickups or deliveries</p>
-        ) : (
-          <div className="divide-y">
-            {data.upcomingIntakes.map((intake) => (
-              <Link key={intake.id} href={`/intakes/${intake.id}`}>
-                <div className="py-3 flex items-center justify-between hover:bg-gray-50 px-2 -mx-2 rounded">
-                  <div className="flex items-center">
-                    <div className="w-16 text-center mr-4">
-                      <div className="text-xs text-gray-500 uppercase">
-                        {new Date(intake.scheduledDate).toLocaleDateString("en-US", { weekday: "short" })}
-                      </div>
-                      <div className="text-lg font-bold text-emerald-600">{new Date(intake.scheduledDate).getDate()}</div>
-                      <div className="text-xs text-gray-500">{new Date(intake.scheduledDate).toLocaleDateString("en-US", { month: "short" })}</div>
-                    </div>
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-mono text-sm text-emerald-600">{intake.ticketNumber}</span>
-                        {getStatusBadge(intake.status ?? "scheduled")}
-                      </div>
-                      <p className="font-medium">{intake.client.companyName}</p>
-                      <p className="text-sm text-gray-500">
-                        {intake.wasteType} | {intake.deliveryType === "client_delivery" ? "Delivery" : "Pickup"}
-                      </p>
-                    </div>
-                  </div>
-                  {/* Intentionally omit weight/tons in public view */}
-                </div>
-              </Link>
-            ))}
+          <div>
+            <div className="text-gray-500 uppercase text-xs tracking-wide mb-1">Generator</div>
+            <div className="font-semibold text-gray-900">Nestle Purina</div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+          <div>
+            <div className="text-gray-500 uppercase text-xs tracking-wide mb-1">Material</div>
+            <div className="font-semibold text-gray-900">Off-spec pet food</div>
+          </div>
+        </div>
+        <div className="mt-4 pt-4 border-t text-xs text-gray-500">
+          ~44,000 lbs (~22 tons) per load · Bags on slip sheets · Salmonella-contaminated product for composting
+        </div>
+      </div>
+
+      {/* All Loads Table - Complete View */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">All Loads</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b-2 border-gray-200">
+                <th className="text-left py-3 px-2 font-semibold text-gray-600">#</th>
+                <th className="text-left py-3 px-2 font-semibold text-gray-600">Date</th>
+                <th className="text-left py-3 px-2 font-semibold text-gray-600">VR Number</th>
+                <th className="text-left py-3 px-2 font-semibold text-gray-600">Status</th>
+                <th className="text-left py-3 px-2 font-semibold text-gray-600">Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {allLoads.map((load) => (
+                <tr
+                  key={load.id}
+                  className={`border-b border-gray-100 ${load.isToday ? "bg-blue-50" : load.isDelivered ? "bg-gray-50" : ""}`}
+                >
+                  <td className="py-3 px-2 text-gray-400 font-mono">{load.loadNumber}</td>
+                  <td className="py-3 px-2">
+                    <span className={load.isToday ? "font-bold text-blue-700" : load.isPast ? "text-gray-500" : "font-medium"}>
+                      {load.dateStr}
+                    </span>
+                    {load.isToday && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">TODAY</span>}
+                  </td>
+                  <td className="py-3 px-2 font-mono">
+                    {load.vrNumber ? (
+                      <span className="text-gray-900">{load.vrNumber}</span>
+                    ) : (
+                      <span className="text-gray-400 italic">Pending</span>
+                    )}
+                  </td>
+                  <td className="py-3 px-2">
+                    {load.isDelivered ? (
+                      <span className="inline-flex items-center text-emerald-700 font-medium">
+                        <CheckCircle2 className="h-4 w-4 mr-1" />
+                        {load.statusTag === "moved" ? "Delivered (moved)" : "Delivered"}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center text-amber-600 font-medium">
+                        <CircleDot className="h-4 w-4 mr-1" />
+                        Scheduled
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-3 px-2 text-gray-500 text-xs">
+                    {load.note || (load.eta ? `ETA ${load.eta}` : "")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Closed Days - Simple Notice */}
+      <div className="text-sm text-gray-500 border-t pt-4">
+        <span className="font-medium text-gray-700">Closed:</span> Dec 25 (Christmas) · Dec 30 - Jan 2 (Holiday) · Reopening Jan 5, 2026
+      </div>
+    </div>
   );
 
   return (
-    <div>
-      <Header title="Schedule" subtitle="Public pickup & delivery calendar" />
-      <div className="p-6 space-y-6">
-        {/* Public view: no admin actions */}
+    <div className="min-h-screen bg-gray-50">
+      {/* Clean Header */}
+      <div className="bg-white border-b">
+        <div className="max-w-5xl mx-auto px-6 py-6">
+          <h1 className="text-2xl font-bold text-gray-900">Delivery Schedule</h1>
+          <p className="text-gray-500 mt-1">Vanguard / Purina Dog Food - Flagstaff</p>
+        </div>
+      </div>
 
-        {/* Tabbed Views */}
+      {/* Main Content */}
+      <div className="max-w-5xl mx-auto px-6 py-8">
         <Tabs
           tabs={[
+            {
+              label: "Overview",
+              value: "summary",
+              content: summaryContent,
+            },
             {
               label: "Calendar",
               value: "calendar",
               content: <Calendar intakes={data.calendarIntakes} />,
-            },
-            {
-              label: "Week View",
-              value: "week",
-              content: weekViewContent,
-            },
-            {
-              label: "Today",
-              value: "today",
-              content: todayContent,
-            },
-            {
-              label: "Upcoming",
-              value: "upcoming",
-              content: upcomingContent,
             },
           ]}
         />
