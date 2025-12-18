@@ -5,6 +5,7 @@ import { TodayView } from "@/components/schedule/TodayView";
 import { prisma } from "@/lib/prisma";
 import Image from "next/image";
 import { ScheduleTheme } from "./ScheduleTheme";
+import { DocumentationTab } from "@/components/schedule/DocumentationTab";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -731,6 +732,11 @@ export default async function SchedulePage() {
                 label: "Today",
                 value: "today",
                 content: <TodayView allLoads={allLoads} />,
+              },
+              {
+                label: "Documentation",
+                value: "docs",
+                content: <DocumentationTab />,
               },
               {
                 label: "Overview",

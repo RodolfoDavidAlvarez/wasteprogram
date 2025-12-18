@@ -4,8 +4,9 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Make schedule the only public page for now.
-  if (pathname !== "/schedule") {
+  // Keep /schedule as the landing page, but allow navigation
+  // to the rest of the app (including /schedule/records/*).
+  if (pathname === "/") {
     const url = request.nextUrl.clone();
     url.pathname = "/schedule";
     return NextResponse.redirect(url);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,24 +9,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "VR number is required" }, { status: 400 });
     }
 
-    // Update delivery record to delivered status
-    const record = await prisma.deliveryRecord.update({
-      where: { vrNumber },
-      data: {
+    const { data: record, error } = await supabase
+      .from("wd_delivery_records")
+      .update({
         status: "delivered",
-        deliveredAt: new Date(),
+        deliveredAt: new Date().toISOString(),
         deliveredBy: deliveredBy || "Field Team",
-      },
-    });
+        updatedAt: new Date().toISOString(),
+      })
+      .eq("vrNumber", vrNumber)
+      .select("*")
+      .single();
+
+    if (error) {
+      // Mirror old behavior: record not found
+      if (error.code === "PGRST116") {
+        return NextResponse.json({ error: "Delivery record not found" }, { status: 404 });
+      }
+      throw error;
+    }
 
     return NextResponse.json({ success: true, record });
   } catch (error: unknown) {
     console.error("Error marking as delivered:", error);
-
-    // Handle record not found
-    if (typeof error === "object" && error !== null && "code" in error && (error as { code?: string }).code === "P2025") {
-      return NextResponse.json({ error: "Delivery record not found" }, { status: 404 });
-    }
 
     return NextResponse.json({ error: "Failed to mark as delivered" }, { status: 500 });
   }

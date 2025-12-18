@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 interface RouteParams {
   params: Promise<{ vrNumber: string }>;
@@ -13,10 +13,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "VR number is required" }, { status: 400 });
     }
 
-    // Try to find existing record
-    const record = await prisma.deliveryRecord.findUnique({
-      where: { vrNumber },
-    });
+    const { data: record, error } = await supabase.from("wd_delivery_records").select("*").eq("vrNumber", vrNumber).maybeSingle();
+    if (error) throw error;
 
     // If not found, return null - record will be created when needed
     if (!record) {
@@ -48,22 +46,29 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "VR number is required" }, { status: 400 });
     }
 
-    // Upsert the delivery record
-    const record = await prisma.deliveryRecord.upsert({
-      where: { vrNumber },
-      update: {
-        ...(body as Record<string, unknown>),
-        updatedAt: new Date(),
-      },
-      create: {
-        vrNumber,
-        loadNumber: typeof body.loadNumber === "number" ? body.loadNumber : 0,
-        status: typeof body.status === "string" ? body.status : "scheduled",
-        tonnage: typeof body.tonnage === "number" ? body.tonnage : 20,
-        scheduledDate: typeof body.scheduledDate === "string" ? new Date(body.scheduledDate) : new Date(),
-        notes: typeof body.notes === "string" ? body.notes : undefined,
-      },
-    });
+    const now = new Date().toISOString();
+    const scheduledDate = typeof body.scheduledDate === "string" ? new Date(body.scheduledDate).toISOString() : now;
+
+    // Supabase upsert (vrNumber is unique)
+    const upsertPayload = {
+      id: crypto.randomUUID(),
+      vrNumber,
+      loadNumber: typeof body.loadNumber === "number" ? body.loadNumber : 0,
+      status: typeof body.status === "string" ? body.status : "scheduled",
+      tonnage: typeof body.tonnage === "number" ? body.tonnage : 20,
+      scheduledDate,
+      notes: typeof body.notes === "string" ? body.notes : null,
+      updatedAt: now,
+      createdAt: now,
+    };
+
+    const { data: record, error } = await supabase
+      .from("wd_delivery_records")
+      .upsert(upsertPayload, { onConflict: "vrNumber" })
+      .select("*")
+      .single();
+
+    if (error) throw error;
 
     return NextResponse.json({ success: true, record });
   } catch (error: unknown) {
