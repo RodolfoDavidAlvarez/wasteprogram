@@ -693,7 +693,11 @@ export default async function SchedulePage() {
       {/* Clean Header */}
       <div className="bg-white border-b">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Delivery Schedule</h1>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-lg sm:text-xl">🌱</span>
+            <span className="text-xs sm:text-sm font-semibold text-emerald-700 uppercase tracking-wide">Soil Seed & Water</span>
+          </div>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Waste Scheduled Delivery</h1>
           <p className="text-sm sm:text-base text-gray-500 mt-1">Vanguard / Purina Dog Food - Flagstaff</p>
         </div>
       </div>
