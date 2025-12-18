@@ -123,7 +123,7 @@ export function OverviewTable({ loads, tonsPerLoad = 20 }: OverviewTableProps) {
     );
   }
 
-  // List View (default)
+  // List View (default) - Cards on mobile, table on desktop
   return (
     <div>
       {/* Toggle */}
@@ -151,9 +151,59 @@ export function OverviewTable({ loads, tonsPerLoad = 20 }: OverviewTableProps) {
         </div>
       </div>
 
-      {/* Table - Responsive */}
-      <div className="overflow-x-auto -mx-4 sm:mx-0">
-        <table className="w-full text-sm min-w-[600px]">
+      {/* Mobile: Card Layout */}
+      <div className="sm:hidden space-y-3">
+        {loads.map((load) => (
+          <div
+            key={load.id}
+            className={`rounded-lg border p-3 ${
+              load.isToday
+                ? "bg-blue-50 border-blue-200"
+                : load.isDelivered
+                  ? "bg-gray-50 border-gray-200"
+                  : "bg-white border-gray-200"
+            }`}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs text-gray-400 font-mono">#{load.loadNumber}</span>
+                  <span className={`text-sm font-medium ${load.isToday ? "text-blue-700" : "text-gray-900"}`}>
+                    {load.dateStr}
+                  </span>
+                  {load.isToday && (
+                    <span className="text-[10px] bg-blue-200 text-blue-800 px-1.5 py-0.5 rounded font-medium">TODAY</span>
+                  )}
+                </div>
+                <div className="font-mono text-sm text-gray-900">
+                  {load.vrNumber || <span className="text-gray-400 italic">VR Pending</span>}
+                </div>
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                <span className="text-xs text-gray-500">{tonsPerLoad}t</span>
+                {load.isDelivered ? (
+                  <span className="inline-flex items-center text-emerald-700 text-xs font-medium">
+                    <CheckCircle2 className="h-3 w-3 mr-0.5" />
+                    Done
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center text-amber-600 text-xs font-medium">
+                    <CircleDot className="h-3 w-3 mr-0.5" />
+                    Sched
+                  </span>
+                )}
+              </div>
+            </div>
+            {(load.note || load.eta) && (
+              <p className="text-xs text-gray-500 mt-2 truncate">{load.note || `ETA ${load.eta}`}</p>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop: Table Layout */}
+      <div className="hidden sm:block">
+        <table className="w-full text-sm">
           <thead>
             <tr className="border-b-2 border-gray-200">
               <th className="text-left py-3 px-2 font-semibold text-gray-600">#</th>
@@ -190,14 +240,12 @@ export function OverviewTable({ loads, tonsPerLoad = 20 }: OverviewTableProps) {
                   {load.isDelivered ? (
                     <span className="inline-flex items-center text-emerald-700 font-medium">
                       <CheckCircle2 className="h-4 w-4 mr-1" />
-                      <span className="hidden sm:inline">{load.statusTag === "moved" ? "Delivered (moved)" : "Delivered"}</span>
-                      <span className="sm:hidden">Done</span>
+                      {load.statusTag === "moved" ? "Delivered (moved)" : "Delivered"}
                     </span>
                   ) : (
                     <span className="inline-flex items-center text-amber-600 font-medium">
                       <CircleDot className="h-4 w-4 mr-1" />
-                      <span className="hidden sm:inline">Scheduled</span>
-                      <span className="sm:hidden">Sched</span>
+                      Scheduled
                     </span>
                   )}
                 </td>
@@ -209,19 +257,6 @@ export function OverviewTable({ loads, tonsPerLoad = 20 }: OverviewTableProps) {
             ))}
           </tbody>
         </table>
-      </div>
-
-      {/* Mobile Notes (shown below table on mobile) */}
-      <div className="md:hidden mt-4 space-y-2">
-        {loads
-          .filter((load) => load.note || load.eta)
-          .slice(0, 5)
-          .map((load) => (
-            <div key={load.id} className="text-xs text-gray-500 flex gap-2">
-              <span className="font-mono text-gray-400">#{load.loadNumber}</span>
-              <span>{load.note || `ETA ${load.eta}`}</span>
-            </div>
-          ))}
       </div>
     </div>
   );
