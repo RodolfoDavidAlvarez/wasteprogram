@@ -1,5 +1,73 @@
 # Session Notes - Waste Diversion App
 
+---
+
+## Field Team Schedule Portal - Vision & Roadmap
+
+**Live URL**: https://wasteprogram.vercel.app/schedule
+
+### What It Does Now (v1.0)
+
+The Schedule page is a **mobile-first portal** for field staff to track incoming deliveries in real-time:
+
+**Today View (Default Tab)**
+- See all deliveries scheduled for today at a glance
+- Navigate between days using prev/next arrows
+- Tap any load card to see full details (VR number, tonnage, ETA, notes)
+- Quick stats: Delivered vs Pending count
+- "Back to Today" button when viewing other days
+
+**Overview Tab**
+- Complete list of all loads with VR numbers
+- Toggle between List view and By Day view
+- Total tonnage tracking (delivered + remaining)
+- Project summary (Client, Origin, Generator, Material)
+
+**Calendar Tab**
+- Monthly calendar view
+- Tap any day to see that day's deliveries
+- Color-coded: Today (blue), Has deliveries (green)
+
+### Coming Soon (v2.0)
+
+**Mark as Unloaded** (Button visible, coming soon)
+- One-tap confirmation when a load is unloaded at the facility
+- Automatically updates status in real-time
+- Timestamp recorded for records
+
+**Upload Documentation**
+- Upload weight tickets directly from phone camera
+- BOL (Bill of Lading) attachments
+- Any shipment documentation
+- All docs linked to the specific load record
+
+### Future Features (v3.0+)
+
+**SMS Notifications**
+- Automatic text when a new load is scheduled
+- ETA updates sent to field team
+- Delay/reschedule alerts
+- Delivery confirmation reminders
+
+**Email Notifications**
+- Daily schedule summary (morning email)
+- Weekly delivery reports
+- New VR number alerts
+- Integration with Soil Seed & Water Gmail
+
+**Real-Time Updates**
+- Push notifications for schedule changes
+- Live ETA tracking
+- Driver communication portal
+
+**Reporting**
+- Tonnage reports by date range
+- Client delivery summaries
+- Environmental impact calculations
+- Export to CSV/PDF
+
+---
+
 ## 2025-12-17 (Evening) - UI Polish + Mobile Responsive
 
 ### What We Did
