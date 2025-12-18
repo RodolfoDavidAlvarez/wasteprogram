@@ -1,5 +1,29 @@
 # Session Notes - Waste Diversion App
 
+## 2025-12-17 (Evening) - UI Polish + Mobile Responsive
+
+### What We Did
+- Added Tonnage column to loads table (20 tons placeholder per load)
+- Created OverviewTable component with List/By Day toggle views
+- Made entire schedule page mobile-responsive
+- Polished Calendar view for mobile (compact cells, tap to see details)
+- Drafted team email with delivery schedule link
+
+### Key Changes
+- `src/components/schedule/OverviewTable.tsx` - New client component with toggle
+- `src/app/schedule/page.tsx` - Integrated OverviewTable, cleaned up imports
+- `src/components/schedule/Calendar.tsx` - Mobile-responsive redesign
+
+### Known Issues / TODO
+- **Soil Seed & Water Gmail MCP needs re-authentication**
+  - Location: `~/.soilseed-mcp/`
+  - Has `credentials.json` but missing `token.json`
+  - Error: `unauthorized_client`
+  - Need to run OAuth flow to complete setup
+  - For now, using Better Systems AI Gmail for all emails
+
+---
+
 ## 2025-12-17 - Gmail MCP Working + Calendar Updated with All VR Numbers
 
 ### What We Did
