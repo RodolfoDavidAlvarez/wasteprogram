@@ -15,6 +15,7 @@ type RecordRow = {
   status: string;
   scheduledDate: string;
   photoUrls: string[];
+  tonnage: number;
 };
 
 export function DocumentationTab() {
@@ -220,14 +221,22 @@ export function DocumentationTab() {
               {sorted.map((r) => (
                 <div key={r.vrNumber} className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Link
-                      href={`/schedule/records/${encodeURIComponent(r.vrNumber)}`}
-                      className="font-mono font-bold text-gray-900 hover:underline"
-                    >
-                      VR {r.vrNumber}
-                    </Link>
-                    <div className="text-xs text-gray-600">
-                      {r.photoUrls.length} photos · {r.status}
+                    <div>
+                      <Link
+                        href={`/schedule/records/${encodeURIComponent(r.vrNumber)}`}
+                        className="font-mono font-bold text-gray-900 hover:underline"
+                      >
+                        VR {r.vrNumber}
+                      </Link>
+                      <p className="text-sm text-gray-600 mt-0.5">
+                        {(r.tonnage * 2000).toLocaleString()} lbs ({r.tonnage.toFixed(2)} tons)
+                      </p>
+                    </div>
+                    <div className="text-xs text-gray-600 text-right">
+                      {r.photoUrls.length} photos<br />
+                      <span className={r.status === "delivered" ? "text-emerald-600" : "text-amber-600"}>
+                        {r.status}
+                      </span>
                     </div>
                   </div>
 

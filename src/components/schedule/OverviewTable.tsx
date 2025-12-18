@@ -37,7 +37,7 @@ export function OverviewTable({ loads, tonsPerLoad = 20 }: OverviewTableProps) {
       <div>
         {/* Toggle */}
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">All Loads</h3>
+          <h3 className="text-lg font-semibold text-gray-900">All Truck Loads</h3>
           <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
             <button
               onClick={() => setGroupByDay(false)}
@@ -80,7 +80,7 @@ export function OverviewTable({ loads, tonsPerLoad = 20 }: OverviewTableProps) {
                   </div>
                   <div className="flex items-center gap-4 text-sm">
                     <span className="text-gray-600">
-                      {dayLoads.length} load{dayLoads.length > 1 ? "s" : ""}
+                      {dayLoads.length} truck load{dayLoads.length > 1 ? "s" : ""}
                     </span>
                     <span className="font-medium text-gray-900">{dayTons} tons</span>
                     {deliveredCount > 0 && (
@@ -128,7 +128,7 @@ export function OverviewTable({ loads, tonsPerLoad = 20 }: OverviewTableProps) {
     <div>
       {/* Toggle */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">All Loads</h3>
+        <h3 className="text-lg font-semibold text-gray-900">All Truck Loads</h3>
         <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
           <button
             onClick={() => setGroupByDay(false)}

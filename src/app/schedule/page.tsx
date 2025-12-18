@@ -2,6 +2,7 @@ import { Tabs } from "@/components/ui/tabs";
 import { Calendar } from "@/components/schedule/Calendar";
 import { OverviewTable } from "@/components/schedule/OverviewTable";
 import { TodayView } from "@/components/schedule/TodayView";
+import { DeliveryChart } from "@/components/schedule/DeliveryChart";
 import { prisma } from "@/lib/prisma";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
@@ -664,48 +665,51 @@ export default async function SchedulePage() {
     });
 
   const summaryContent = (
-    <div className="space-y-8">
-      {/* Hero Stats - Big and Clear */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-        <div className="text-center py-6 border-b-4 border-gray-200">
-          <div className="text-5xl font-bold text-gray-900">{totalLoads}</div>
-          <div className="text-sm text-gray-500 mt-1 uppercase tracking-wide">Total Loads</div>
-          <div className="text-lg text-gray-400 mt-1">{totalTons} tons</div>
+    <div className="space-y-6">
+      {/* 7-Day Delivery Chart */}
+      <DeliveryChart loads={allLoads} />
+
+      {/* Hero Stats - Compact on mobile, spacious on desktop */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-6">
+        <div className="text-center py-3 sm:py-6 border-b-4 border-gray-200">
+          <div className="text-3xl sm:text-5xl font-bold text-gray-900">{totalLoads}</div>
+          <div className="text-[10px] sm:text-sm text-gray-500 mt-0.5 sm:mt-1 uppercase tracking-wide">Total</div>
+          <div className="text-sm sm:text-lg text-gray-400 mt-0.5 sm:mt-1">{totalTons}t</div>
         </div>
-        <div className="text-center py-6 border-b-4 border-emerald-500">
-          <div className="text-5xl font-bold text-emerald-600">{deliveredLoads}</div>
-          <div className="text-sm text-gray-500 mt-1 uppercase tracking-wide">Delivered</div>
-          <div className="text-lg text-emerald-500 mt-1">{tonsDelivered} tons</div>
+        <div className="text-center py-3 sm:py-6 border-b-4 border-emerald-500">
+          <div className="text-3xl sm:text-5xl font-bold text-emerald-600">{deliveredLoads}</div>
+          <div className="text-[10px] sm:text-sm text-gray-500 mt-0.5 sm:mt-1 uppercase tracking-wide">Delivered</div>
+          <div className="text-sm sm:text-lg text-emerald-500 mt-0.5 sm:mt-1">{tonsDelivered}t</div>
         </div>
-        <div className="text-center py-6 border-b-4 border-amber-500">
-          <div className="text-5xl font-bold text-amber-600">{scheduledLoads}</div>
-          <div className="text-sm text-gray-500 mt-1 uppercase tracking-wide">Remaining</div>
-          <div className="text-lg text-amber-500 mt-1">{tonsRemaining} tons</div>
+        <div className="text-center py-3 sm:py-6 border-b-4 border-amber-500">
+          <div className="text-3xl sm:text-5xl font-bold text-amber-600">{scheduledLoads}</div>
+          <div className="text-[10px] sm:text-sm text-gray-500 mt-0.5 sm:mt-1 uppercase tracking-wide">Remaining</div>
+          <div className="text-sm sm:text-lg text-amber-500 mt-0.5 sm:mt-1">{tonsRemaining}t</div>
         </div>
       </div>
 
-      {/* Project Info - Clean Grid */}
-      <div className="bg-card border border-border rounded-lg p-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
+      {/* Project Info - Compact on mobile */}
+      <div className="bg-card border border-border rounded-lg p-3 sm:p-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 text-sm">
           <div>
-            <div className="text-gray-500 uppercase text-xs tracking-wide mb-1">Client</div>
-            <div className="font-semibold text-gray-900">Vanguard Renewables</div>
+            <div className="text-gray-500 uppercase text-[10px] sm:text-xs tracking-wide mb-0.5 sm:mb-1">Client</div>
+            <div className="font-semibold text-gray-900 text-xs sm:text-sm">Vanguard Renewables</div>
           </div>
           <div>
-            <div className="text-gray-500 uppercase text-xs tracking-wide mb-1">Origin</div>
-            <div className="font-semibold text-gray-900">Flagstaff, AZ</div>
+            <div className="text-gray-500 uppercase text-[10px] sm:text-xs tracking-wide mb-0.5 sm:mb-1">Origin</div>
+            <div className="font-semibold text-gray-900 text-xs sm:text-sm">Flagstaff, AZ</div>
           </div>
           <div>
-            <div className="text-gray-500 uppercase text-xs tracking-wide mb-1">Generator</div>
-            <div className="font-semibold text-gray-900">Nestle Purina</div>
+            <div className="text-gray-500 uppercase text-[10px] sm:text-xs tracking-wide mb-0.5 sm:mb-1">Generator</div>
+            <div className="font-semibold text-gray-900 text-xs sm:text-sm">Nestle Purina</div>
           </div>
           <div>
-            <div className="text-gray-500 uppercase text-xs tracking-wide mb-1">Material</div>
-            <div className="font-semibold text-gray-900">Off-spec pet food</div>
+            <div className="text-gray-500 uppercase text-[10px] sm:text-xs tracking-wide mb-0.5 sm:mb-1">Material</div>
+            <div className="font-semibold text-gray-900 text-xs sm:text-sm">Off-spec pet food</div>
           </div>
         </div>
-        <div className="mt-4 pt-4 border-t text-xs text-gray-500">
-          ~44,000 lbs (~22 tons) per load · Bags on slip sheets · Salmonella-contaminated product for composting
+        <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t text-[10px] sm:text-xs text-gray-500">
+          ~44,000 lbs (~22 tons) per load · Bags on slip sheets
         </div>
       </div>
 
@@ -755,6 +759,7 @@ export default async function SchedulePage() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         <div className="rounded-2xl border border-border bg-card/80 backdrop-blur shadow-sm p-3 sm:p-4">
           <Tabs
+            persistKey="schedule-active-tab"
             tabs={[
               {
                 label: "Today",

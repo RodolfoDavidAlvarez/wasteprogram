@@ -301,10 +301,10 @@ export function TodayView({ allLoads, photosByVr = {} }: TodayViewProps) {
             </div>
           </div>
 
-          {/* Day's Loads */}
+          {/* Day's Truck Loads */}
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-              {dayLabel}&apos;s Loads ({loads.length})
+              {dayLabel}&apos;s Truck Loads ({loads.length})
             </h3>
             {loads.map((load) => {
               // Get photo data for this load
@@ -400,10 +400,10 @@ export function TodayView({ allLoads, photosByVr = {} }: TodayViewProps) {
                       {load.note && <p className="text-xs text-gray-500 mt-1 line-clamp-1">{load.note}</p>}
                     </div>
 
-                    {/* Right Column - Load # and Badge */}
+                    {/* Right Column - Truck Load # and Badge */}
                     <div className="flex flex-col items-end justify-between flex-shrink-0">
                       <div className="text-right">
-                        <span className="text-[10px] text-gray-400 uppercase tracking-wide">Load</span>
+                        <span className="text-[10px] text-gray-400 uppercase tracking-wide">Truck</span>
                         <div className="text-lg font-bold text-gray-400">#{photoData?.loadNumber || load.loadNumber}</div>
                       </div>
 
@@ -441,15 +441,15 @@ export function TodayView({ allLoads, photosByVr = {} }: TodayViewProps) {
       >
         <DialogContent className="max-w-md mx-2 sm:mx-auto rounded-xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold">{selectedLoad?.vrNumber ? `VR ${selectedLoad.vrNumber}` : "Load Details"}</DialogTitle>
+            <DialogTitle className="text-lg font-bold">{selectedLoad?.vrNumber ? `VR ${selectedLoad.vrNumber}` : "Truck Load Details"}</DialogTitle>
           </DialogHeader>
 
           {selectedLoad && (
             <div className="space-y-6 pt-2">
-              {/* Load Info */}
+              {/* Truck Load Info */}
               <div className="space-y-3">
                 <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-500">Load #</span>
+                  <span className="text-gray-500">Truck Load #</span>
                   <span className="font-bold text-gray-900">{selectedLoad.loadNumber}</span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b">
@@ -484,7 +484,7 @@ export function TodayView({ allLoads, photosByVr = {} }: TodayViewProps) {
               {selectedLoad.isDelivered || deliveryRecord?.status === "delivered" ? (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-center">
                   <CheckCircle2 className="h-8 w-8 text-emerald-600 mx-auto mb-2" />
-                  <p className="font-semibold text-emerald-700">This load has been delivered</p>
+                  <p className="font-semibold text-emerald-700">This truck load has been delivered</p>
                   {deliveryRecord?.deliveredAt && (
                     <p className="text-xs text-emerald-600 mt-1">{new Date(deliveryRecord.deliveredAt).toLocaleString()}</p>
                   )}

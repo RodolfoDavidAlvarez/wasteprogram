@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Camera, CheckCircle2, Loader2, Trash2, Undo2 } from "lucide-react";
+import { ArrowLeft, Camera, CheckCircle2, Loader2, Trash2, Undo2, Scale, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScheduleTheme } from "../../ScheduleTheme";
 import { usePinProtection } from "@/components/ui/pin-dialog";
@@ -34,6 +34,9 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
   const [marking, setMarking] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [undoing, setUndoing] = useState(false);
+  const [editingWeight, setEditingWeight] = useState(false);
+  const [weightLbs, setWeightLbs] = useState("");
+  const [savingWeight, setSavingWeight] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // PIN protection hook
@@ -173,6 +176,44 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
     });
   };
 
+  const doSaveWeight = async () => {
+    const lbs = parseFloat(weightLbs);
+    if (isNaN(lbs) || lbs <= 0) {
+      alert("Please enter a valid weight in pounds");
+      return;
+    }
+    setSavingWeight(true);
+    try {
+      const res = await fetch("/api/schedule/update-weight", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vrNumber, weightLbs: lbs }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed to update weight");
+      await refresh();
+      setEditingWeight(false);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to update weight.");
+    } finally {
+      setSavingWeight(false);
+    }
+  };
+
+  const handleSaveWeight = () => {
+    requestPin(doSaveWeight, {
+      title: "Update Weight",
+      description: "Enter admin PIN to update the recorded weight",
+    });
+  };
+
+  // Helper to format weight
+  const formatWeight = (tons: number) => {
+    const lbs = tons * 2000;
+    return `${lbs.toLocaleString()} lbs (${tons.toFixed(2)} tons)`;
+  };
+
   return (
     <div className="min-h-screen schedule-theme app-background">
       <ScheduleTheme />
@@ -200,7 +241,7 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
             {/* VR Number Header */}
             <div className="text-center py-4">
               <h1 className="text-2xl font-bold text-gray-900 font-mono">VR {vrNumber}</h1>
-              <p className="text-gray-500 mt-1">Load #{record.loadNumber} · {record.tonnage} tons</p>
+              <p className="text-gray-500 mt-1">Truck Load #{record.loadNumber}</p>
             </div>
 
             {/* Status Card */}
@@ -221,6 +262,74 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
                 <p className="text-sm opacity-90">
                   {new Date(record.deliveredAt).toLocaleString()}
                 </p>
+              )}
+            </div>
+
+            {/* Weight Section */}
+            <div className="bg-white rounded-xl border border-gray-200 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Scale className="h-5 w-5 text-gray-500" />
+                  <h2 className="font-semibold text-gray-900">Net Weight</h2>
+                </div>
+                {!editingWeight && (
+                  <button
+                    onClick={() => {
+                      setWeightLbs((record.tonnage * 2000).toString());
+                      setEditingWeight(true);
+                    }}
+                    className="flex items-center gap-1 text-sm text-emerald-600 hover:text-emerald-700"
+                  >
+                    <Pencil className="h-4 w-4" />
+                    Edit
+                  </button>
+                )}
+              </div>
+
+              {editingWeight ? (
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-sm text-gray-500 mb-1 block">Weight in pounds</label>
+                    <input
+                      type="number"
+                      value={weightLbs}
+                      onChange={(e) => setWeightLbs(e.target.value)}
+                      placeholder="e.g., 42500"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-lg font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                    {weightLbs && !isNaN(parseFloat(weightLbs)) && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        = {(parseFloat(weightLbs) / 2000).toFixed(2)} tons
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleSaveWeight}
+                      disabled={savingWeight}
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                    >
+                      {savingWeight ? (
+                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</>
+                      ) : (
+                        "Save Weight"
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setEditingWeight(false)}
+                      disabled={savingWeight}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-2">
+                  <p className="text-2xl font-bold text-gray-900">
+                    {formatWeight(record.tonnage)}
+                  </p>
+                </div>
               )}
             </div>
 
