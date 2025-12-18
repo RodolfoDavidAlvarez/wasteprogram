@@ -1,14 +1,22 @@
 // Waste Diversion App - Database Schema
 // SSW Waste Intake Tracking System
+// ==========================================
+// IMPORTANT: All tables use "wd_" prefix to avoid conflicts with
+// Organic Soil Wholesale tables in the shared Supabase database.
+// ==========================================
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// ==========================================
+// CLIENT & CONTRACT MANAGEMENT
+// ==========================================
 
 // Client/Account Management
 model Client {
@@ -35,6 +43,8 @@ model Client {
   intakes             WasteIntake[]
   contracts           Contract[]
   scaleTransactions   ScaleTransaction[]
+
+  @@map("wd_clients")
 }
 
 // Contracts/Service Agreements
@@ -51,7 +61,13 @@ model Contract {
   status            String   @default("active") // active, expired, terminated
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+
+  @@map("wd_contracts")
 }
+
+// ==========================================
+// WASTE INTAKE & TRACKING
+// ==========================================
 
 // Waste Intake Request/Ticket
 model WasteIntake {
@@ -119,6 +135,8 @@ model WasteIntake {
   updatedAt             DateTime @updatedAt
 
   contaminationReports  ContaminationReport[]
+
+  @@map("wd_waste_intakes")
 }
 
 // Contamination Tracking
@@ -134,7 +152,13 @@ model ContaminationReport {
   reportedBy      String
   reportedAt      DateTime    @default(now())
   photos          String?     // JSON array of photo URLs
+
+  @@map("wd_contamination_reports")
 }
+
+// ==========================================
+// CONFIGURATION & OPERATIONS
+// ==========================================
 
 // Waste Type Configuration
 model WasteTypeConfig {
@@ -148,6 +172,8 @@ model WasteTypeConfig {
   processingNotes String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  @@map("wd_waste_type_configs")
 }
 
 // Daily Operations Summary
@@ -163,6 +189,8 @@ model DailyOperations {
   notes                 String?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
+
+  @@map("wd_daily_operations")
 }
 
 // Environmental Impact Metrics
@@ -181,6 +209,7 @@ model EnvironmentalMetrics {
   updatedAt             DateTime @updatedAt
 
   @@unique([month, year])
+  @@map("wd_environmental_metrics")
 }
 
 // System Users (for audit trail)
@@ -191,6 +220,8 @@ model User {
   role          String   @default("operator") // admin, manager, operator
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@map("wd_users")
 }
 
 // ==========================================
@@ -262,6 +293,8 @@ model ScaleTransaction {
   updatedAt             DateTime  @updatedAt
 
   billOfLading          BillOfLading?
+
+  @@map("wd_scale_transactions")
 }
 
 // Bill of Lading
@@ -303,7 +336,13 @@ model BillOfLading {
 
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+
+  @@map("wd_bills_of_lading")
 }
+
+// ==========================================
+// FLEET MANAGEMENT
+// ==========================================
 
 // Company Trucks (for outbound pickups)
 model CompanyTruck {
@@ -317,6 +356,8 @@ model CompanyTruck {
   notes         String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@map("wd_company_trucks")
 }
 
 // Company Drivers
@@ -329,4 +370,6 @@ model Driver {
   status        String   @default("active") // active, inactive
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@map("wd_drivers")
 }

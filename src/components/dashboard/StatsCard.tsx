@@ -40,10 +40,10 @@ export function StatsCard({
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-500">{title}</p>
-            <p className="text-3xl font-bold text-gray-900 mt-1">{value}</p>
+            <p className="text-sm font-medium text-muted-foreground">{title}</p>
+            <p className="text-3xl font-bold text-foreground mt-1">{value}</p>
             {subtitle && (
-              <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
+              <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
             )}
             {trend && (
               <div className="flex items-center mt-2">
@@ -61,7 +61,7 @@ export function StatsCard({
                   {trend.value >= 0 ? "+" : ""}
                   {trend.value}%
                 </span>
-                <span className="text-sm text-gray-500 ml-1">
+                <span className="text-sm text-muted-foreground ml-1">
                   {trend.label}
                 </span>
               </div>

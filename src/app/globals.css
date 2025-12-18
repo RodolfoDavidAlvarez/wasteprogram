@@ -91,4 +91,27 @@ body {
       radial-gradient(900px circle at 100% 0%, hsl(var(--primary) / 0.14), transparent 60%),
       radial-gradient(700px circle at 50% 100%, hsl(var(--accent) / 0.8), transparent 60%);
   }
+
+  @keyframes logo-flash {
+    0% {
+      opacity: 0;
+      transform: translateY(2px) scale(0.99);
+    }
+    15% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    70% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-1px) scale(0.995);
+    }
+  }
+
+  .animate-logo-flash {
+    animation: logo-flash 900ms ease-out 1 both;
+  }
 }

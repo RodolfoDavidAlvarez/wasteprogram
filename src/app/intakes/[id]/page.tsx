@@ -34,9 +34,13 @@ export default async function IntakeDetailPage({ params }: IntakeDetailPageProps
   const packagingLabel = PACKAGING_TYPES.find((p) => p.value === intake.packagingType)?.label || intake.packagingType;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background/30">
       {/* Mobile-optimized Header */}
-      <div className="bg-white border-b sticky top-0 z-10">
+      <div className="relative border-b border-border bg-background/75 backdrop-blur sticky top-0 z-10">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-primary via-[hsl(var(--ring))] to-transparent"
+        />
         <div className="p-4">
           <div className="flex items-center justify-between mb-3">
             <Link href="/schedule">
@@ -61,11 +65,11 @@ export default async function IntakeDetailPage({ params }: IntakeDetailPageProps
           {/* Ticket Header */}
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-emerald-600" />
-              <h1 className="text-xl font-bold font-mono text-emerald-600">{intake.ticketNumber}</h1>
+              <FileText className="h-5 w-5 text-primary" />
+              <h1 className="text-xl font-bold font-mono text-primary">{intake.ticketNumber}</h1>
             </div>
-            <p className="text-gray-600">{intake.client.companyName}</p>
-            <div className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold ${statusConfig?.color || "bg-gray-100"}`}>
+            <p className="text-muted-foreground">{intake.client.companyName}</p>
+            <div className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold ${statusConfig?.color || "bg-muted"}`}>
               {statusConfig?.label || intake.status}
             </div>
           </div>
@@ -78,23 +82,23 @@ export default async function IntakeDetailPage({ params }: IntakeDetailPageProps
 
         {/* Quick Stats Cards */}
         <div className="grid grid-cols-2 gap-3">
-          <Card className="border-emerald-200">
+          <Card className="border-primary/20">
             <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-gray-600 mb-1">
+              <div className="flex items-center gap-2 text-muted-foreground mb-1">
                 <Weight className="h-4 w-4" />
                 <span className="text-xs">Estimated</span>
               </div>
-              <p className="text-2xl font-bold text-emerald-600">{formatWeight(intake.estimatedWeight)}</p>
+              <p className="text-2xl font-bold text-primary">{formatWeight(intake.estimatedWeight)}</p>
             </CardContent>
           </Card>
-          <Card className="border-emerald-200">
+          <Card className="border-primary/20">
             <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-gray-600 mb-1">
+              <div className="flex items-center gap-2 text-muted-foreground mb-1">
                 <Calendar className="h-4 w-4" />
                 <span className="text-xs">Scheduled</span>
               </div>
               <p className="text-sm font-semibold">{formatDate(intake.scheduledDate)}</p>
-              {intake.scheduledTimeWindow && <p className="text-xs text-gray-500">{intake.scheduledTimeWindow}</p>}
+              {intake.scheduledTimeWindow && <p className="text-xs text-muted-foreground">{intake.scheduledTimeWindow}</p>}
             </CardContent>
           </Card>
         </div>

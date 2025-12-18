@@ -18,3 +18,4 @@ export const config = {
   // Apply to everything except Next internals + static assets + API routes.
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };
+

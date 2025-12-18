@@ -18,17 +18,17 @@ export default function Error({
   }, [error])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
-      <div className="text-center max-w-md">
+    <div className="min-h-screen app-background flex items-center justify-center p-6">
+      <div className="text-center max-w-md rounded-xl border border-border bg-card/80 backdrop-blur p-8 shadow-sm">
         <AlertTriangle className="h-16 w-16 text-amber-500 mx-auto mb-6" />
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground mb-2">
           Something went wrong
         </h1>
-        <p className="text-gray-600 mb-6">
+        <p className="text-muted-foreground mb-6">
           We apologize for the inconvenience. An unexpected error occurred while processing your request.
         </p>
         {error.digest && (
-          <p className="text-sm text-gray-400 mb-6 font-mono">
+          <p className="text-sm text-muted-foreground/70 mb-6 font-mono">
             Error ID: {error.digest}
           </p>
         )}
