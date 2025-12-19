@@ -214,6 +214,56 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
     return `${lbs.toLocaleString()} lbs (${tons.toFixed(2)} tons)`;
   };
 
+  // BOL metadata for outbound deliveries
+  const bolData: Record<string, {
+    ticketNumber: string;
+    licensePlate: string;
+    trailer?: string;
+    destination: string;
+    origin: string;
+    materialType: string;
+    grossWeight: number;
+    tareWeight: number;
+    netWeight: number;
+    timeIn: string;
+    timeOut: string;
+    scaleOperator: string;
+    weighTicketPath: string;
+  }> = {
+    "BOL-121925-01": {
+      ticketNumber: "121925-01",
+      licensePlate: "4UH4601",
+      trailer: "141359",
+      destination: "Robinson Calf Ranch, 1001 East Hosking Avenue, Bakersfield CA 93307",
+      origin: "18980 Stanton Rd, Congress, AZ 85332",
+      materialType: "Waste",
+      grossWeight: 74660,
+      tareWeight: 36120,
+      netWeight: 38540,
+      timeIn: "9:00 AM",
+      timeOut: "10:00 AM",
+      scaleOperator: "SC",
+      weighTicketPath: "/weigh-tickets/2025-12-19/weigh-ticket-1.html"
+    },
+    "BOL-121925-02": {
+      ticketNumber: "121925-02",
+      licensePlate: "4NC8490",
+      destination: "Robinson Calf Ranch, 1001 East Hosking Avenue, Bakersfield CA 93307",
+      origin: "18980 Stanton Rd, Congress, AZ 85332",
+      materialType: "Waste",
+      grossWeight: 71340,
+      tareWeight: 36120,
+      netWeight: 35220,
+      timeIn: "10:00 AM",
+      timeOut: "10:50 AM",
+      scaleOperator: "SC",
+      weighTicketPath: "/weigh-tickets/2025-12-19/weigh-ticket-2.html"
+    }
+  };
+
+  const isBOL = vrNumber.startsWith("BOL-");
+  const bolInfo = isBOL ? bolData[vrNumber] : null;
+
   return (
     <div className="min-h-screen schedule-theme app-background">
       <ScheduleTheme />
@@ -242,7 +292,118 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
             <div className="text-center py-4">
               <h1 className="text-2xl font-bold text-gray-900 font-mono">VR {vrNumber}</h1>
               <p className="text-gray-500 mt-1">Truck Load #{record.loadNumber}</p>
+              {isBOL && (
+                <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 text-blue-900 rounded-full text-sm font-semibold">
+                  <Truck className="h-4 w-4" />
+                  Outbound Delivery from Congress
+                </div>
+              )}
             </div>
+
+            {/* BOL Details Card */}
+            {isBOL && bolInfo && (
+              <div className="bg-white rounded-xl border-2 border-blue-200 overflow-hidden">
+                {/* BOL Header */}
+                <div className="bg-blue-50 border-b border-blue-200 px-4 py-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-blue-600" />
+                      <h2 className="font-bold text-blue-900">Bill of Lading & Weigh Ticket</h2>
+                    </div>
+                    <a
+                      href={bolInfo.weighTicketPath}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      <FileText className="h-4 w-4" />
+                      View Weigh Ticket
+                    </a>
+                  </div>
+                </div>
+
+                {/* BOL Details Grid */}
+                <div className="p-4 space-y-3">
+                  {/* Truck Info */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-xs text-gray-500 font-medium mb-1">License Plate</p>
+                      <p className="text-lg font-bold text-gray-900 font-mono">{bolInfo.licensePlate}</p>
+                    </div>
+                    {bolInfo.trailer && (
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <p className="text-xs text-gray-500 font-medium mb-1">Trailer #</p>
+                        <p className="text-lg font-bold text-gray-900 font-mono">{bolInfo.trailer}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Times */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-xs text-gray-500 font-medium mb-1">Time In</p>
+                      <p className="font-semibold text-gray-900">{bolInfo.timeIn}</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3">
+                      <p className="text-xs text-gray-500 font-medium mb-1">Time Out</p>
+                      <p className="font-semibold text-gray-900">{bolInfo.timeOut}</p>
+                    </div>
+                  </div>
+
+                  {/* Weights */}
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                    <h3 className="text-sm font-bold text-emerald-900 mb-3">Scale Weights</h3>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div>
+                        <p className="text-xs text-gray-600 mb-1">Gross</p>
+                        <p className="font-bold text-gray-900">{bolInfo.grossWeight.toLocaleString()}</p>
+                        <p className="text-xs text-gray-500">lbs</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-600 mb-1">Tare</p>
+                        <p className="font-bold text-gray-900">{bolInfo.tareWeight.toLocaleString()}</p>
+                        <p className="text-xs text-gray-500">lbs</p>
+                      </div>
+                      <div className="bg-emerald-600 text-white rounded-lg p-2">
+                        <p className="text-xs mb-1">Net</p>
+                        <p className="font-bold text-lg">{bolInfo.netWeight.toLocaleString()}</p>
+                        <p className="text-xs opacity-90">{(bolInfo.netWeight / 2000).toFixed(2)} tons</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Origin/Destination */}
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2">
+                      <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium">Origin</p>
+                        <p className="text-sm text-gray-900">{bolInfo.origin}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <MapPin className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-xs text-gray-500 font-medium">Destination</p>
+                        <p className="text-sm font-semibold text-blue-900">{bolInfo.destination}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Material & Operator */}
+                  <div className="grid grid-cols-2 gap-3 pt-2 border-t border-gray-200">
+                    <div>
+                      <p className="text-xs text-gray-500 font-medium mb-1">Material Type</p>
+                      <p className="text-sm font-semibold text-gray-900">{bolInfo.materialType}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 font-medium mb-1">Scale Operator</p>
+                      <p className="text-sm font-semibold text-gray-900">{bolInfo.scaleOperator}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Status Card */}
             <div

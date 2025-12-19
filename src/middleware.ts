@@ -41,6 +41,11 @@ export async function middleware(request: NextRequest) {
             name,
             value,
             ...options,
+            // Set longer expiration for session cookies
+            maxAge: name.includes("auth") ? 60 * 60 * 24 * 7 : options.maxAge, // 7 days for auth cookies
+            sameSite: "lax",
+            secure: process.env.NODE_ENV === "production",
+            httpOnly: name.includes("auth-token") ? true : false,
           });
           response = NextResponse.next({
             request: {
@@ -51,6 +56,10 @@ export async function middleware(request: NextRequest) {
             name,
             value,
             ...options,
+            maxAge: name.includes("auth") ? 60 * 60 * 24 * 7 : options.maxAge,
+            sameSite: "lax",
+            secure: process.env.NODE_ENV === "production",
+            httpOnly: name.includes("auth-token") ? true : false,
           });
         },
         remove(name: string, options: CookieOptions) {
