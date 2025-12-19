@@ -86,8 +86,8 @@ export default function CongressArrivalPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-10 sm:px-6 lg:px-8">
+    <div className="min-h-screen schedule-theme bg-[hsl(var(--background))] text-foreground">
+      <div className="mx-auto flex max-w-4xl flex-col gap-8 px-4 py-10 sm:px-6 lg:px-8">
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <Badge className="bg-emerald-100 text-emerald-800">Congress, AZ</Badge>

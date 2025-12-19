@@ -124,13 +124,11 @@ export default function WeighTicketPage() {
           <div className="bg-white/90 backdrop-blur rounded-2xl shadow-md border border-emerald-100/70 p-6 sm:p-7 lg:p-8">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
               <div>
-                <p className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">
-                  Scale House
-                </p>
+                <p className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">Scale House</p>
                 <h1 className="text-2xl font-bold text-gray-900 mt-1">Submit Weigh Ticket</h1>
                 <p className="text-sm text-gray-600 mt-2 leading-relaxed">
-                  Net weight auto-calculates from gross and tare. On submit, a copy is emailed to
-                  <br className="hidden sm:block" /> ralvarez@soilseedandwater.com.
+                  Quick submit form - only ticket #, date, driver, material type, and weights required.
+                  <br className="hidden sm:block" /> Net weight auto-calculates. On submit, a copy is emailed.
                 </p>
               </div>
               <div className="inline-flex items-center gap-2 self-start rounded-full bg-emerald-50 text-emerald-700 px-3 py-1 text-xs font-semibold border border-emerald-100">
@@ -162,7 +160,9 @@ export default function WeighTicketPage() {
                 </div>
                 <div className="flex gap-3">
                   <div className="flex-1">
-                    <label className="text-sm font-medium text-gray-700">Time In</label>
+                    <label className="text-sm font-medium text-gray-700">
+                      Time In <span className="text-gray-400 text-xs">(optional)</span>
+                    </label>
                     <input
                       type="time"
                       className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
@@ -171,7 +171,9 @@ export default function WeighTicketPage() {
                     />
                   </div>
                   <div className="flex-1">
-                    <label className="text-sm font-medium text-gray-700">Time Out</label>
+                    <label className="text-sm font-medium text-gray-700">
+                      Time Out <span className="text-gray-400 text-xs">(optional)</span>
+                    </label>
                     <input
                       type="time"
                       className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
@@ -184,15 +186,6 @@ export default function WeighTicketPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Carrier / Company</label>
-                  <input
-                    className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
-                    value={form.carrierCompany}
-                    onChange={(e) => handleChange("carrierCompany", e.target.value)}
-                    required
-                  />
-                </div>
-                <div>
                   <label className="text-sm font-medium text-gray-700">Driver Name</label>
                   <input
                     className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
@@ -201,20 +194,33 @@ export default function WeighTicketPage() {
                     required
                   />
                 </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Carrier / Company <span className="text-gray-400 text-xs">(optional)</span>
+                  </label>
+                  <input
+                    className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
+                    value={form.carrierCompany}
+                    onChange={(e) => handleChange("carrierCompany", e.target.value)}
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Truck # / Plate</label>
+                  <label className="text-sm font-medium text-gray-700">
+                    Truck # / Plate <span className="text-gray-400 text-xs">(optional)</span>
+                  </label>
                   <input
                     className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
                     value={form.truckNumber}
                     onChange={(e) => handleChange("truckNumber", e.target.value)}
-                    required
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Trailer #</label>
+                  <label className="text-sm font-medium text-gray-700">
+                    Trailer # <span className="text-gray-400 text-xs">(optional)</span>
+                  </label>
                   <input
                     className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
                     value={form.trailerNumber}
@@ -225,41 +231,46 @@ export default function WeighTicketPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Reference / BOL #</label>
-                  <input
-                    className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
-                    value={form.referenceNumber}
-                    onChange={(e) => handleChange("referenceNumber", e.target.value)}
-                  />
-                </div>
-                <div>
                   <label className="text-sm font-medium text-gray-700">Material Type</label>
                   <input
                     className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
                     value={form.materialType}
                     onChange={(e) => handleChange("materialType", e.target.value)}
                     required
+                    placeholder="e.g., Food Waste, Green Waste"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    Reference / BOL # <span className="text-gray-400 text-xs">(optional)</span>
+                  </label>
+                  <input
+                    className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
+                    value={form.referenceNumber}
+                    onChange={(e) => handleChange("referenceNumber", e.target.value)}
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Origin</label>
+                  <label className="text-sm font-medium text-gray-700">
+                    Origin <span className="text-gray-400 text-xs">(optional)</span>
+                  </label>
                   <input
                     className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
                     value={form.origin}
                     onChange={(e) => handleChange("origin", e.target.value)}
-                    required
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Destination</label>
+                  <label className="text-sm font-medium text-gray-700">
+                    Destination <span className="text-gray-400 text-xs">(optional)</span>
+                  </label>
                   <input
                     className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
                     value={form.destination}
                     onChange={(e) => handleChange("destination", e.target.value)}
-                    required
                   />
                 </div>
               </div>
@@ -311,9 +322,7 @@ export default function WeighTicketPage() {
               {status && (
                 <div
                   className={`rounded-lg px-4 py-3 text-sm border shadow-xs ${
-                    status.type === "success"
-                      ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                      : "bg-rose-50 text-rose-800 border-rose-200"
+                    status.type === "success" ? "bg-emerald-50 text-emerald-800 border-emerald-200" : "bg-rose-50 text-rose-800 border-rose-200"
                   }`}
                 >
                   {status.message}

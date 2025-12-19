@@ -74,8 +74,11 @@ export async function POST(request: Request) {
     console.error("Failed to load alert recipients:", error);
   }
 
-  if (!recipients.length && process.env.ADMIN_PHONE_NUMBER) {
-    recipients.push(process.env.ADMIN_PHONE_NUMBER);
+  if (!recipients.length) {
+    const fallback = process.env.ADMIN_PHONE_NUMBER || "+19285501649";
+    if (fallback) {
+      recipients.push(fallback);
+    }
   }
 
   if (!recipients.length) {

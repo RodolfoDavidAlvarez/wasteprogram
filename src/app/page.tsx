@@ -8,6 +8,8 @@ import { Tabs } from "@/components/ui/tabs";
 import { Calendar } from "@/components/schedule/Calendar";
 import { prisma } from "@/lib/prisma";
 import { calculateCO2Avoided, calculateLandfillSpaceSaved, calculateCompostProduced } from "@/lib/utils";
+import { getCurrentUser } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -230,6 +232,12 @@ async function getDashboardData() {
 }
 
 export default async function DashboardPage() {
+  // Check authentication
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect("/login");
+  }
+
   const data = await getDashboardData();
 
   return (

@@ -1,9 +1,9 @@
-const { PrismaClient } = require("@prisma/client")
+const { PrismaClient } = require("@prisma/client");
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
 async function main() {
-  console.log("Seeding database...")
+  console.log("Seeding database...");
 
   // Create sample clients
   const clients = await Promise.all([
@@ -20,7 +20,7 @@ async function main() {
         city: "Greenville",
         state: "CA",
         zipCode: "94000",
-        tippingFeeRate: 45.00,
+        tippingFeeRate: 45.0,
         notes: "Large organic farm, regular weekly pickups",
         status: "active",
       },
@@ -36,7 +36,7 @@ async function main() {
         city: "Hopsville",
         state: "CA",
         zipCode: "94001",
-        tippingFeeRate: 40.00,
+        tippingFeeRate: 40.0,
         notes: "Spent grain and brewing waste",
         status: "active",
       },
@@ -53,7 +53,7 @@ async function main() {
         city: "Commerce City",
         state: "CA",
         zipCode: "94002",
-        tippingFeeRate: 50.00,
+        tippingFeeRate: 50.0,
         notes: "Expired produce and food waste",
         status: "active",
       },
@@ -69,31 +69,31 @@ async function main() {
         city: "Greenville",
         state: "CA",
         zipCode: "94000",
-        tippingFeeRate: 35.00,
+        tippingFeeRate: 35.0,
         notes: "Green waste and yard trimmings from city parks",
         status: "active",
       },
     }),
-  ])
+  ]);
 
-  console.log(`Created ${clients.length} clients`)
+  console.log(`Created ${clients.length} clients`);
 
   // Create sample intakes with various statuses
-  const now = new Date()
-  const intakes = []
+  const now = new Date();
+  const intakes = [];
 
   // Past received intakes (for metrics)
   for (let i = 0; i < 20; i++) {
-    const daysAgo = Math.floor(Math.random() * 60) + 1
-    const clientIndex = Math.floor(Math.random() * clients.length)
-    const client = clients[clientIndex]
-    const estimatedWeight = Math.round((Math.random() * 8 + 2) * 100) / 100
-    const actualWeight = estimatedWeight + (Math.random() * 1 - 0.5)
-    const scheduledDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000)
-    const receivedDate = new Date(scheduledDate.getTime() + 2 * 60 * 60 * 1000)
+    const daysAgo = Math.floor(Math.random() * 60) + 1;
+    const clientIndex = Math.floor(Math.random() * clients.length);
+    const client = clients[clientIndex];
+    const estimatedWeight = Math.round((Math.random() * 8 + 2) * 100) / 100;
+    const actualWeight = estimatedWeight + (Math.random() * 1 - 0.5);
+    const scheduledDate = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+    const receivedDate = new Date(scheduledDate.getTime() + 2 * 60 * 60 * 1000);
 
-    const wasteTypes = ["food_waste", "green_waste", "wood_chips", "brewery_grain", "expired_produce"]
-    const wasteType = wasteTypes[Math.floor(Math.random() * wasteTypes.length)]
+    const wasteTypes = ["food_waste", "green_waste", "wood_chips", "brewery_grain", "expired_produce"];
+    const wasteType = wasteTypes[Math.floor(Math.random() * wasteTypes.length)];
 
     intakes.push(
       prisma.wasteIntake.create({
@@ -119,19 +119,19 @@ async function main() {
           approvedAt: new Date(scheduledDate.getTime() - 24 * 60 * 60 * 1000),
         },
       })
-    )
+    );
   }
 
   // Upcoming scheduled intakes
   for (let i = 0; i < 5; i++) {
-    const daysAhead = Math.floor(Math.random() * 14) + 1
-    const clientIndex = Math.floor(Math.random() * clients.length)
-    const client = clients[clientIndex]
-    const estimatedWeight = Math.round((Math.random() * 8 + 2) * 100) / 100
-    const scheduledDate = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000)
+    const daysAhead = Math.floor(Math.random() * 14) + 1;
+    const clientIndex = Math.floor(Math.random() * clients.length);
+    const client = clients[clientIndex];
+    const estimatedWeight = Math.round((Math.random() * 8 + 2) * 100) / 100;
+    const scheduledDate = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
 
-    const wasteTypes = ["food_waste", "green_waste", "wood_chips", "brewery_grain"]
-    const wasteType = wasteTypes[Math.floor(Math.random() * wasteTypes.length)]
+    const wasteTypes = ["food_waste", "green_waste", "wood_chips", "brewery_grain"];
+    const wasteType = wasteTypes[Math.floor(Math.random() * wasteTypes.length)];
 
     intakes.push(
       prisma.wasteIntake.create({
@@ -153,16 +153,16 @@ async function main() {
           pickupZip: "94000",
         },
       })
-    )
+    );
   }
 
   // Pending intakes
   for (let i = 0; i < 3; i++) {
-    const daysAhead = Math.floor(Math.random() * 7) + 3
-    const clientIndex = Math.floor(Math.random() * clients.length)
-    const client = clients[clientIndex]
-    const estimatedWeight = Math.round((Math.random() * 6 + 1) * 100) / 100
-    const scheduledDate = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000)
+    const daysAhead = Math.floor(Math.random() * 7) + 3;
+    const clientIndex = Math.floor(Math.random() * clients.length);
+    const client = clients[clientIndex];
+    const estimatedWeight = Math.round((Math.random() * 6 + 1) * 100) / 100;
+    const scheduledDate = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
 
     intakes.push(
       prisma.wasteIntake.create({
@@ -180,11 +180,11 @@ async function main() {
           tippingFeeRate: client.tippingFeeRate,
         },
       })
-    )
+    );
   }
 
-  const createdIntakes = await Promise.all(intakes)
-  console.log(`Created ${createdIntakes.length} intakes`)
+  const createdIntakes = await Promise.all(intakes);
+  console.log(`Created ${createdIntakes.length} intakes`);
 
   // Create waste type configurations
   const wasteTypesConfig = await Promise.all([
@@ -195,7 +195,7 @@ async function main() {
         description: "General food waste and scraps",
         category: "organic",
         acceptedStatus: "accepted",
-        defaultRate: 45.00,
+        defaultRate: 45.0,
       },
     }),
     prisma.wasteTypeConfig.create({
@@ -205,7 +205,7 @@ async function main() {
         description: "Grass clippings, leaves, branches",
         category: "green_waste",
         acceptedStatus: "accepted",
-        defaultRate: 35.00,
+        defaultRate: 35.0,
       },
     }),
     prisma.wasteTypeConfig.create({
@@ -215,7 +215,7 @@ async function main() {
         description: "Chipped wood and tree debris",
         category: "wood",
         acceptedStatus: "accepted",
-        defaultRate: 30.00,
+        defaultRate: 30.0,
       },
     }),
     prisma.wasteTypeConfig.create({
@@ -225,7 +225,7 @@ async function main() {
         description: "Spent grain from brewing operations",
         category: "organic",
         acceptedStatus: "accepted",
-        defaultRate: 40.00,
+        defaultRate: 40.0,
       },
     }),
     prisma.wasteTypeConfig.create({
@@ -235,21 +235,16 @@ async function main() {
         description: "Animal manure for composting",
         category: "manure",
         acceptedStatus: "accepted",
-        defaultRate: 25.00,
+        defaultRate: 25.0,
       },
     }),
-  ])
+  ]);
 
-  console.log(`Created ${wasteTypesConfig.length} waste type configurations`)
+  console.log(`Created ${wasteTypesConfig.length} waste type configurations`);
 
-  // Create a sample user
-  await prisma.user.create({
-    data: {
-      email: "operations@soilseedwater.com",
-      name: "Operations Team",
-      role: "admin",
-    },
-  })
+  // Note: Admin users should be created via scripts/create-admin-user.ts
+  // which handles both Supabase Auth and database user creation
+  // This seed script only handles alert recipients
 
   await prisma.alertRecipient.upsert({
     where: { phone_site: { phone: "+19285501649", site: "congress_az" } },
@@ -265,18 +260,18 @@ async function main() {
       site: "congress_az",
       active: true,
     },
-  })
+  });
 
-  console.log("Created sample user")
-  console.log("Ensured alert recipient for Congress AZ")
-  console.log("Seeding complete!")
+  console.log("Created sample user");
+  console.log("Ensured alert recipient for Congress AZ");
+  console.log("Seeding complete!");
 }
 
 main()
   .catch((e) => {
-    console.error(e)
-    process.exit(1)
+    console.error(e);
+    process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect()
-  })
+    await prisma.$disconnect();
+  });

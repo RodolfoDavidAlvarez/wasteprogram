@@ -212,12 +212,14 @@ model EnvironmentalMetrics {
   @@map("wd_environmental_metrics")
 }
 
-// System Users (for audit trail)
+// System Users (for audit trail) - linked to Supabase Auth
 model User {
   id            String   @id @default(cuid())
+  authUserId    String   @unique // Supabase Auth user ID (UUID)
   email         String   @unique
   name          String
   role          String   @default("operator") // admin, manager, operator
+  phone         String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
