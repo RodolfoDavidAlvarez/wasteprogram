@@ -20,7 +20,7 @@ export default function WeighTicketPrintPage() {
       <style>{`
         @page {
           size: letter;
-          margin: 0.5in;
+          margin: 0.75in;
         }
 
         @media print {
@@ -28,6 +28,16 @@ export default function WeighTicketPrintPage() {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
+
+          * {
+            margin: 0;
+            padding: 0;
+          }
+        }
+
+        body {
+          margin: 0;
+          padding: 0;
         }
       `}</style>
       <div
@@ -38,7 +48,8 @@ export default function WeighTicketPrintPage() {
           background: "white",
           maxWidth: "7.5in",
           margin: "0 auto",
-          padding: "0",
+          padding: "0.5in",
+          boxSizing: "border-box",
         }}
       >
         {/* Header */}
