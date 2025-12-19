@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Camera, CheckCircle2, Loader2, Trash2, Undo2, Scale, Pencil } from "lucide-react";
+import { ArrowLeft, Camera, CheckCircle2, Loader2, Trash2, Undo2, Scale, Pencil, FileText, Truck, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScheduleTheme } from "../../ScheduleTheme";
 import { usePinProtection } from "@/components/ui/pin-dialog";
@@ -215,21 +215,24 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
   };
 
   // BOL metadata for outbound deliveries
-  const bolData: Record<string, {
-    ticketNumber: string;
-    licensePlate: string;
-    trailer?: string;
-    destination: string;
-    origin: string;
-    materialType: string;
-    grossWeight: number;
-    tareWeight: number;
-    netWeight: number;
-    timeIn: string;
-    timeOut: string;
-    scaleOperator: string;
-    weighTicketPath: string;
-  }> = {
+  const bolData: Record<
+    string,
+    {
+      ticketNumber: string;
+      licensePlate: string;
+      trailer?: string;
+      destination: string;
+      origin: string;
+      materialType: string;
+      grossWeight: number;
+      tareWeight: number;
+      netWeight: number;
+      timeIn: string;
+      timeOut: string;
+      scaleOperator: string;
+      weighTicketPath: string;
+    }
+  > = {
     "BOL-121925-01": {
       ticketNumber: "121925-01",
       licensePlate: "4UH4601",
@@ -243,7 +246,7 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
       timeIn: "9:00 AM",
       timeOut: "10:00 AM",
       scaleOperator: "SC",
-      weighTicketPath: "/weigh-tickets/2025-12-19/weigh-ticket-1.html"
+      weighTicketPath: "/weigh-tickets/2025-12-19/weigh-ticket-1.html",
     },
     "BOL-121925-02": {
       ticketNumber: "121925-02",
@@ -257,12 +260,13 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
       timeIn: "10:00 AM",
       timeOut: "10:50 AM",
       scaleOperator: "SC",
-      weighTicketPath: "/weigh-tickets/2025-12-19/weigh-ticket-2.html"
-    }
+      weighTicketPath: "/weigh-tickets/2025-12-19/weigh-ticket-2.html",
+    },
   };
 
   const isBOL = vrNumber.startsWith("BOL-");
-  const bolInfo = isBOL ? bolData[vrNumber] : null;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const bolInfo = bolData[vrNumber];
 
   return (
     <div className="min-h-screen schedule-theme app-background">
@@ -270,10 +274,7 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
       {PinDialogComponent}
       <div className="p-4 space-y-4 max-w-lg mx-auto">
         {/* Back Button */}
-        <Link
-          href="/schedule"
-          className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 py-2 -ml-2"
-        >
+        <Link href="/schedule" className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 py-2 -ml-2">
           <ArrowLeft className="h-5 w-5" />
           <span className="font-medium">Back</span>
         </Link>
@@ -406,24 +407,12 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
             )}
 
             {/* Status Card */}
-            <div
-              className={`rounded-xl p-6 text-center ${
-                isDelivered
-                  ? "bg-emerald-500 text-white"
-                  : "bg-amber-100 text-amber-900"
-              }`}
-            >
+            <div className={`rounded-xl p-6 text-center ${isDelivered ? "bg-emerald-500 text-white" : "bg-amber-100 text-amber-900"}`}>
               <div className="flex items-center justify-center gap-2 mb-1">
                 {isDelivered && <CheckCircle2 className="h-6 w-6" />}
-                <span className="text-xl font-bold">
-                  {isDelivered ? "Delivered" : "Pending Delivery"}
-                </span>
+                <span className="text-xl font-bold">{isDelivered ? "Delivered" : "Pending Delivery"}</span>
               </div>
-              {isDelivered && record.deliveredAt && (
-                <p className="text-sm opacity-90">
-                  {new Date(record.deliveredAt).toLocaleString()}
-                </p>
-              )}
+              {isDelivered && record.deliveredAt && <p className="text-sm opacity-90">{new Date(record.deliveredAt).toLocaleString()}</p>}
             </div>
 
             {/* Weight Section */}
@@ -459,37 +448,27 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 text-lg font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                     {weightLbs && !isNaN(parseFloat(weightLbs)) && (
-                      <p className="text-sm text-gray-500 mt-1">
-                        = {(parseFloat(weightLbs) / 2000).toFixed(2)} tons
-                      </p>
+                      <p className="text-sm text-gray-500 mt-1">= {(parseFloat(weightLbs) / 2000).toFixed(2)} tons</p>
                     )}
                   </div>
                   <div className="flex gap-2">
-                    <Button
-                      onClick={handleSaveWeight}
-                      disabled={savingWeight}
-                      className="flex-1 bg-emerald-600 hover:bg-emerald-700"
-                    >
+                    <Button onClick={handleSaveWeight} disabled={savingWeight} className="flex-1 bg-emerald-600 hover:bg-emerald-700">
                       {savingWeight ? (
-                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</>
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...
+                        </>
                       ) : (
                         "Save Weight"
                       )}
                     </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setEditingWeight(false)}
-                      disabled={savingWeight}
-                    >
+                    <Button variant="outline" onClick={() => setEditingWeight(false)} disabled={savingWeight}>
                       Cancel
                     </Button>
                   </div>
                 </div>
               ) : (
                 <div className="text-center py-2">
-                  <p className="text-2xl font-bold text-gray-900">
-                    {formatWeight(record.tonnage)}
-                  </p>
+                  <p className="text-2xl font-bold text-gray-900">{formatWeight(record.tonnage)}</p>
                 </div>
               )}
             </div>
@@ -498,7 +477,9 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
             <div className="bg-white rounded-xl border border-gray-200 p-4">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-gray-900">Documentation</h2>
-                <span className="text-sm text-gray-500">{photos.length} photo{photos.length !== 1 ? "s" : ""}</span>
+                <span className="text-sm text-gray-500">
+                  {photos.length} photo{photos.length !== 1 ? "s" : ""}
+                </span>
               </div>
 
               {/* Photo Grid */}
@@ -513,13 +494,7 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
                         }}
                         className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 hover:border-emerald-400 transition-colors w-full"
                       >
-                        <Image
-                          src={url}
-                          alt={`Photo ${idx + 1}`}
-                          fill
-                          className="object-cover"
-                          unoptimized
-                        />
+                        <Image src={url} alt={`Photo ${idx + 1}`} fill className="object-cover" unoptimized />
                       </button>
                       {/* Delete button overlay */}
                       <button
@@ -530,11 +505,7 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
                         disabled={deleting}
                         className="absolute top-1 right-1 p-1.5 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600"
                       >
-                        {deleting ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-3 w-3" />
-                        )}
+                        {deleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
                       </button>
                     </div>
                   ))}
@@ -547,19 +518,8 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
               )}
 
               {/* Add Photo Button */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="hidden"
-              />
-              <Button
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="w-full"
-              >
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
+              <Button variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="w-full">
                 {uploading ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Uploading...
@@ -626,4 +586,3 @@ export default function DeliveryRecordPageClient({ vrNumber }: { vrNumber: strin
     </div>
   );
 }
-
