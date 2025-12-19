@@ -166,13 +166,22 @@ export function Calendar({ intakes = [] }: CalendarProps) {
           {calendarDays.map((day, index) => {
             const isTodayDate = isToday(day);
             const isPastDate = isPast(day);
+            const dateForDay = day !== null ? new Date(currentDate.getFullYear(), currentDate.getMonth(), day) : null;
+            const isWeekend = dateForDay ? dateForDay.getDay() === 0 || dateForDay.getDay() === 6 : false;
             const hasIntakes = day !== null && intakesByDay[day]?.length > 0;
             const intakeCount = day !== null ? intakesByDay[day]?.length || 0 : 0;
             const deliveryStatus = day !== null ? getDayDeliveryStatus(day) : "none";
+            const dayTextColor = isWeekend ? "text-gray-400" : isTodayDate ? "text-blue-700" : isPastDate ? "text-gray-400" : "text-gray-800";
 
             // Determine background color based on delivery status
             const getDayStyles = () => {
               if (day === null) return "bg-gray-50 border-gray-100";
+              if (isWeekend) {
+                if (hasIntakes) {
+                  return "bg-orange-50 border-orange-200 border-dashed";
+                }
+                return "bg-gray-50 border-gray-200 border-dashed text-gray-400 opacity-80";
+              }
               if (isTodayDate) {
                 // Today gets special styling regardless of delivery status
                 if (deliveryStatus === "all_delivered") {
@@ -212,10 +221,10 @@ export function Calendar({ intakes = [] }: CalendarProps) {
             return (
               <div
                 key={index}
-                onClick={() => day !== null && hasIntakes && setSelectedDay(day)}
+                onClick={() => day !== null && hasIntakes && !isWeekend && setSelectedDay(day)}
                 className={`
                   min-h-[48px] sm:min-h-[100px] p-1 sm:p-2 rounded sm:rounded-lg border text-sm
-                  ${hasIntakes ? "cursor-pointer" : ""}
+                  ${hasIntakes && !isWeekend ? "cursor-pointer" : ""}
                   ${getDayStyles()}
                 `}
               >
@@ -225,7 +234,7 @@ export function Calendar({ intakes = [] }: CalendarProps) {
                     <div
                       className={`
                         text-sm sm:text-lg font-semibold
-                        ${isTodayDate ? "text-blue-700" : isPastDate ? "text-gray-400" : "text-gray-800"}
+                        ${dayTextColor}
                       `}
                     >
                       <div className="flex items-center justify-between">
@@ -242,6 +251,10 @@ export function Calendar({ intakes = [] }: CalendarProps) {
                         {hasIntakes && <span className={`hidden sm:inline-block h-2 w-2 rounded-full ${getBadgeColor()}`} aria-label="Has intakes" />}
                       </div>
                     </div>
+
+                    {isWeekend && !hasIntakes && (
+                      <div className="text-[10px] sm:text-xs text-gray-400 font-medium uppercase tracking-wide mt-1 sm:mt-2">Closed</div>
+                    )}
 
                     {/* Intakes for this day - hidden on mobile, show on desktop */}
                     <div className="hidden sm:block space-y-1 mt-1">
@@ -298,6 +311,7 @@ export function Calendar({ intakes = [] }: CalendarProps) {
               <span>Scheduled</span>
             </div>
           </div>
+          <div className="text-[11px] sm:text-xs text-gray-500 mt-2">Closed on Saturdays and Sundays.</div>
           <p className="sm:hidden text-gray-400 mt-2">Tap a day to see delivery details</p>
         </div>
       </CardContent>
@@ -325,6 +339,7 @@ export function Calendar({ intakes = [] }: CalendarProps) {
               intakesByDay[selectedDay]?.map((intake) => {
                 const pill = getStatusPill(intake.statusTag ?? null);
                 const hasVrNumber = !!intake.vrNumber;
+                const weightTons = intake.estimatedWeight && intake.estimatedWeight > 0 ? intake.estimatedWeight : 20;
 
                 const cardContent = (
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
@@ -346,7 +361,7 @@ export function Calendar({ intakes = [] }: CalendarProps) {
                       {intake.scheduledTimeWindow && <p className="text-xs sm:text-sm text-gray-500 mt-1">{intake.scheduledTimeWindow}</p>}
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                      <div className="text-sm font-medium text-gray-700">20 tons</div>
+                      <div className="text-sm font-medium text-gray-700">{weightTons} tons</div>
                       {hasVrNumber && (
                         <span className="inline-flex items-center text-xs font-semibold text-emerald-600 group-hover:text-emerald-700">
                           View Details
@@ -375,10 +390,20 @@ export function Calendar({ intakes = [] }: CalendarProps) {
               <div className="border-t pt-3 mt-3">
                 <div className="flex justify-between items-center bg-emerald-50 p-3 rounded-lg">
                   <span className="font-semibold text-emerald-900 text-sm sm:text-base">Day Total:</span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-emerald-900">{intakesByDay[selectedDay].length} loads</span>
-                    <span className="text-sm font-bold text-emerald-700">{intakesByDay[selectedDay].length * 20} tons</span>
-                  </div>
+                  {(() => {
+                    const dayLoads = intakesByDay[selectedDay] ?? [];
+                    const totalTons = dayLoads.reduce((sum, intake) => {
+                      const weight = intake.estimatedWeight && intake.estimatedWeight > 0 ? intake.estimatedWeight : 20;
+                      return sum + weight;
+                    }, 0);
+                    const totalDisplay = Number.isInteger(totalTons) ? totalTons : totalTons.toFixed(1);
+                    return (
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-semibold text-emerald-900">{dayLoads.length} loads</span>
+                        <span className="text-sm font-bold text-emerald-700">{totalDisplay} tons</span>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             )}

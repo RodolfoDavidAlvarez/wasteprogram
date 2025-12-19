@@ -251,7 +251,24 @@ async function main() {
     },
   })
 
+  await prisma.alertRecipient.upsert({
+    where: { phone_site: { phone: "+19285501649", site: "congress_az" } },
+    update: {
+      name: "Rodolfo Alvarez",
+      email: "ralvarez@soilseedandwater.com",
+      active: true,
+    },
+    create: {
+      name: "Rodolfo Alvarez",
+      phone: "+19285501649",
+      email: "ralvarez@soilseedandwater.com",
+      site: "congress_az",
+      active: true,
+    },
+  })
+
   console.log("Created sample user")
+  console.log("Ensured alert recipient for Congress AZ")
   console.log("Seeding complete!")
 }
 

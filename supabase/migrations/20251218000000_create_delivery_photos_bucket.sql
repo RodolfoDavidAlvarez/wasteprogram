@@ -18,3 +18,4 @@ BEGIN
     WHERE id = 'delivery-photos';
   END IF;
 END $$;
+

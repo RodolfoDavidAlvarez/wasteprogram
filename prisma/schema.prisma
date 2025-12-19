@@ -224,6 +224,21 @@ model User {
   @@map("wd_users")
 }
 
+// Alert recipients for SMS/email pings
+model AlertRecipient {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  email     String?
+  site      String   @default("congress_az")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([phone, site])
+  @@map("wd_alert_recipients")
+}
+
 // ==========================================
 // SCALE HOUSE & WEIGHT TICKET SYSTEM
 // ==========================================

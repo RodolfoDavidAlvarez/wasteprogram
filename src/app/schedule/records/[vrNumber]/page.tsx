@@ -10,3 +10,4 @@ export default function DeliveryRecordPage({ params }: PageProps) {
   return <DeliveryRecordPageClient vrNumber={decodeURIComponent(params.vrNumber)} />;
 }
 
+
