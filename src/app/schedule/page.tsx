@@ -9,6 +9,7 @@ import Image from "next/image";
 import { ScheduleTheme } from "./ScheduleTheme";
 import { DocumentationTab } from "@/components/schedule/DocumentationTab";
 import { LoginButton } from "@/components/layout/LoginButton";
+import { ArrivalQuickLinks } from "@/components/schedule/ArrivalQuickLinks";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -648,6 +649,7 @@ async function getDeliveryRecordsForPhotos() {
 
 export default async function SchedulePage() {
   const [data, photosByVr] = await Promise.all([getScheduleData(), getDeliveryRecordsForPhotos()]);
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
   // Calculate summary stats
   // Each load is ~44,000 lbs = ~22 tons (from Casey's emails)
@@ -777,6 +779,9 @@ export default async function SchedulePage() {
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         <div className="rounded-2xl border border-border bg-card/80 backdrop-blur shadow-sm p-3 sm:p-4">
+          <div className="mb-4">
+            <ArrivalQuickLinks appUrl={appUrl} />
+          </div>
           <Tabs
             persistKey="schedule-active-tab"
             tabs={[
