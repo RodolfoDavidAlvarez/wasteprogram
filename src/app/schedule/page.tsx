@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import { ScheduleTheme } from "./ScheduleTheme";
 import { DocumentationTab } from "@/components/schedule/DocumentationTab";
+import { LoginButton } from "@/components/layout/LoginButton";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -748,7 +749,7 @@ export default async function SchedulePage() {
           className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-primary via-[hsl(var(--ring))] to-transparent"
         />
         <div className="px-4 sm:px-6 py-4 sm:py-6">
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center justify-between gap-3 mb-2">
             <div className="inline-flex items-center rounded-lg bg-card shadow-sm ring-1 ring-black/5 px-3 py-2">
               <div className="relative h-10 sm:h-12 aspect-[2083/729]">
                 <Image
@@ -762,6 +763,7 @@ export default async function SchedulePage() {
                 />
               </div>
             </div>
+            <LoginButton />
           </div>
           <div className="max-w-5xl">
             <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">Waste Scheduled Delivery</h1>

@@ -34,7 +34,7 @@ export default function LoginPage() {
       if (data.user) {
         // Refresh the page to update auth state
         router.refresh();
-        router.push("/");
+        router.push("/admin");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");

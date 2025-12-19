@@ -5,9 +5,21 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Public routes that don't require authentication
-  const publicRoutes = ["/login", "/congress-arrival"];
-  const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
+  // Redirect root to schedule page (public landing page)
+  if (pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/schedule";
+    return NextResponse.redirect(url);
+  }
+
+  // Only protect admin routes - everything else is public
+  const adminRoutes = ["/admin"];
+  const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
+
+  // If not an admin route and not login, allow public access
+  if (!isAdminRoute && pathname !== "/login") {
+    return NextResponse.next();
+  }
 
   // Create a response object
   let response = NextResponse.next({
@@ -16,74 +28,130 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  // Create Supabase client for auth check
-  const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
-    cookies: {
-      get(name: string) {
-        return request.cookies.get(name)?.value;
+  // Only check auth for admin routes
+  if (isAdminRoute) {
+    // Create Supabase client for auth check
+    const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value;
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          request.cookies.set({
+            name,
+            value,
+            ...options,
+          });
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          });
+          response.cookies.set({
+            name,
+            value,
+            ...options,
+          });
+        },
+        remove(name: string, options: CookieOptions) {
+          request.cookies.set({
+            name,
+            value: "",
+            ...options,
+          });
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          });
+          response.cookies.set({
+            name,
+            value: "",
+            ...options,
+          });
+        },
       },
-      set(name: string, value: string, options: CookieOptions) {
-        request.cookies.set({
-          name,
-          value,
-          ...options,
-        });
-        response = NextResponse.next({
-          request: {
-            headers: request.headers,
-          },
-        });
-        response.cookies.set({
-          name,
-          value,
-          ...options,
-        });
-      },
-      remove(name: string, options: CookieOptions) {
-        request.cookies.set({
-          name,
-          value: "",
-          ...options,
-        });
-        response = NextResponse.next({
-          request: {
-            headers: request.headers,
-          },
-        });
-        response.cookies.set({
-          name,
-          value: "",
-          ...options,
-        });
-      },
-    },
-  });
+    });
 
-  // Check authentication for protected routes
-  if (!isPublicRoute) {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    try {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
 
-    if (!user) {
-      // Redirect to login if not authenticated
+      if (error || !user) {
+        // Redirect to login if not authenticated
+        const url = request.nextUrl.clone();
+        url.pathname = "/login";
+        url.searchParams.set("redirect", pathname);
+        return NextResponse.redirect(url);
+      }
+    } catch (error) {
+      // If auth check fails, redirect to login
+      console.error("Auth check error:", error);
       const url = request.nextUrl.clone();
       url.pathname = "/login";
-      url.searchParams.set("redirect", pathname);
       return NextResponse.redirect(url);
     }
   }
 
-  // If already logged in and trying to access login page, redirect to dashboard
+  // If already logged in and trying to access login page, redirect to admin
   if (pathname === "/login") {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    try {
+      const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value;
+          },
+          set(name: string, value: string, options: CookieOptions) {
+            request.cookies.set({
+              name,
+              value,
+              ...options,
+            });
+            response = NextResponse.next({
+              request: {
+                headers: request.headers,
+              },
+            });
+            response.cookies.set({
+              name,
+              value,
+              ...options,
+            });
+          },
+          remove(name: string, options: CookieOptions) {
+            request.cookies.set({
+              name,
+              value: "",
+              ...options,
+            });
+            response = NextResponse.next({
+              request: {
+                headers: request.headers,
+              },
+            });
+            response.cookies.set({
+              name,
+              value: "",
+              ...options,
+            });
+          },
+        },
+      });
 
-    if (user) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/";
-      return NextResponse.redirect(url);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/admin";
+        return NextResponse.redirect(url);
+      }
+    } catch (error) {
+      // If auth check fails, allow access to login page
+      console.error("Auth check error on login page:", error);
     }
   }
 

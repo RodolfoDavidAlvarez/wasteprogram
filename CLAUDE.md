@@ -7,6 +7,15 @@ This is the **Waste Diversion App** for Soil Seed & Water (SSW). It manages wast
 **Live URL**: https://wasteprogram.vercel.app/
 **Deployment**: Vercel (auto-deploy from main branch)
 
+### Congress, AZ Plant Address
+
+**Default Origin for BOLs/Weigh Tickets**:
+- Address: `18980 Stanton Rd, Congress, AZ 85332`
+- Coordinates: `34°10'42.1"N 112°47'18.2"W`
+- [Google Maps](https://maps.app.goo.gl/TkrzEwmyxXqPeNGeA)
+
+Most weigh tickets and BOLs will use this as the origin address.
+
 ---
 
 ## CRITICAL: Shared Database Architecture

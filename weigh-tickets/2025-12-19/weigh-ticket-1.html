@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Weigh Ticket #1 - 121925-01</title>
+  <style>
+    @page {
+      size: letter;
+      margin: 0.5in;
+    }
+
+    @media print {
+      body {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      * {
+        page-break-inside: avoid;
+      }
+
+      .container {
+        page-break-inside: avoid;
+      }
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-size: 10px;
+      color: #111827;
+      background: white;
+    }
+
+    .container {
+      max-width: 7.5in;
+      margin: 0 auto;
+      padding: 0.25in;
+      box-sizing: border-box;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 3px solid #059669;
+      padding-bottom: 8px;
+      margin-bottom: 10px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #111827;
+    }
+
+    .header-right {
+      text-align: right;
+    }
+
+    .ticket-label {
+      font-size: 9px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .ticket-number {
+      font-size: 16px;
+      font-weight: bold;
+      font-family: 'Courier New', monospace;
+      border-bottom: 2px solid #d1d5db;
+      padding: 4px 8px;
+      min-width: 120px;
+      margin-top: 4px;
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .field {
+      flex: 1;
+    }
+
+    .field-label {
+      font-size: 9px;
+      font-weight: 600;
+      color: #4b5563;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .field-value {
+      border-bottom: 2px solid #d1d5db;
+      min-height: 20px;
+      padding: 3px 0;
+      font-size: 10px;
+      font-weight: 500;
+    }
+
+    .section {
+      background: #f9fafb;
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      font-size: 10px;
+      font-weight: bold;
+      color: #374151;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .weights-section {
+      border: 2px solid #059669;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+
+    .weights-title {
+      font-size: 12px;
+      font-weight: bold;
+      color: #047857;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    .weight-box {
+      flex: 1;
+      text-align: center;
+    }
+
+    .weight-box-label {
+      font-size: 9px;
+      font-weight: 600;
+      color: #4b5563;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .weight-box-label.net {
+      color: #047857;
+    }
+
+    .weight-value {
+      border: 2px solid #d1d5db;
+      border-radius: 4px;
+      min-height: 32px;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: bold;
+      font-family: 'Courier New', monospace;
+    }
+
+    .weight-value.net {
+      border-color: #059669;
+      background: #ecfdf5;
+      color: #047857;
+    }
+
+    .weight-unit {
+      font-size: 9px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+
+    .weight-unit.net {
+      color: #059669;
+    }
+
+    .signatures {
+      display: flex;
+      gap: 24px;
+      padding-top: 10px;
+      border-top: 1px solid #e5e7eb;
+      margin-bottom: 10px;
+    }
+
+    .signature-line {
+      flex: 1;
+    }
+
+    .signature-box {
+      border-bottom: 2px solid #9ca3af;
+      min-height: 28px;
+      margin-bottom: 4px;
+    }
+
+    .signature-label {
+      font-size: 9px;
+      color: #4b5563;
+    }
+
+    .footer {
+      border-top: 1px solid #e5e7eb;
+      padding-top: 8px;
+      text-align: center;
+    }
+
+    .footer-text {
+      font-size: 9px;
+      color: #9ca3af;
+    }
+
+    .footer-subtext {
+      font-size: 8px;
+      color: #d1d5db;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-left">
+        <span class="header-title">WEIGH TICKET</span>
+      </div>
+      <div class="header-right">
+        <div class="ticket-label">Ticket #</div>
+        <div class="ticket-number">121925-01</div>
+      </div>
+    </div>
+
+    <!-- Date and Time Row -->
+    <div class="row">
+      <div class="field">
+        <div class="field-label">Date</div>
+        <div class="field-value">Thursday, December 19, 2025</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Time In</div>
+        <div class="field-value">9:00 AM</div>
+      </div>
+      <div class="field">
+        <div class="field-label">Time Out</div>
+        <div class="field-value">10:00 AM</div>
+      </div>
+    </div>
+
+    <!-- Carrier / Driver Info Section -->
+    <div class="section">
+      <div class="section-title">Carrier / Driver Information</div>
+      <div class="row">
+        <div class="field">
+          <div class="field-label">Carrier / Company Name</div>
+          <div class="field-value"></div>
+        </div>
+        <div class="field">
+          <div class="field-label">Driver Name</div>
+          <div class="field-value"></div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <div class="field-label">Truck # / License Plate</div>
+          <div class="field-value">4UH4601</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Trailer #</div>
+          <div class="field-value">141359</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Load Info Section -->
+    <div class="section">
+      <div class="section-title">Load Information</div>
+      <div class="row">
+        <div class="field">
+          <div class="field-label">Reference # / BOL #</div>
+          <div class="field-value">BOL 12/19/2025</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Material Type</div>
+          <div class="field-value">Waste</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <div class="field-label">Origin</div>
+          <div class="field-value">18980 Stanton Rd, Congress, AZ 85332</div>
+        </div>
+        <div class="field">
+          <div class="field-label">Destination</div>
+          <div class="field-value">Robinson Calf Ranch, 1001 East Hosking Avenue, Bakersfield CA 93307</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scale Weights Section -->
+    <div class="weights-section">
+      <div class="weights-title">Scale Weights</div>
+      <div class="row" style="margin-bottom: 14px;">
+        <div class="weight-box">
+          <div class="weight-box-label">Gross Weight</div>
+          <div class="weight-value">74,660</div>
+          <div class="weight-unit">lbs</div>
+        </div>
+        <div class="weight-box">
+          <div class="weight-box-label">Tare Weight</div>
+          <div class="weight-value">36,120</div>
+          <div class="weight-unit">lbs</div>
+        </div>
+        <div class="weight-box">
+          <div class="weight-box-label net">Net Weight</div>
+          <div class="weight-value net">38,540</div>
+          <div class="weight-unit net">lbs</div>
+        </div>
+      </div>
+      <div style="border-top: 1px solid #e5e7eb; margin-top: 12px; padding-top: 12px;">
+        <div class="row">
+          <div class="field" style="text-align: center;">
+            <div class="field-label">Net Weight (Tons)</div>
+            <div class="field-value" style="text-align: center; font-weight: bold;">19.27</div>
+          </div>
+          <div class="field" style="text-align: center;">
+            <div class="field-label">Scale Operator Initials</div>
+            <div class="field-value" style="text-align: center; font-weight: bold;">SC</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div style="margin-bottom: 14px;">
+      <div class="field-label">Notes / Comments</div>
+      <div style="border: 2px solid #e5e7eb; border-radius: 4px; min-height: 50px; padding: 8px;">
+        Weigh Ticket 1 of 2 - BOL for Friday, December 19, 2025
+      </div>
+    </div>
+
+    <!-- Signatures -->
+    <div class="signatures">
+      <div class="signature-line">
+        <div class="signature-box"></div>
+        <div class="signature-label">Driver Signature</div>
+      </div>
+      <div class="signature-line">
+        <div class="signature-box"></div>
+        <div class="signature-label">SSW Representative Signature</div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div class="footer-text">Soil Seed & Water &bull; soilseedandwater.com</div>
+      <div class="footer-subtext">This ticket is valid for the date shown above. Retain copy for your records.</div>
+    </div>
+  </div>
+</body>
+</html>
