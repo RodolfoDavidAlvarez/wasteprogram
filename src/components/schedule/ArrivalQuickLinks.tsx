@@ -44,12 +44,15 @@ export function ArrivalQuickLinks({ appUrl }: Props) {
                 <Copy className="mr-2 h-4 w-4" />
                 {copied ? "Copied" : "Copy"}
               </Button>
-              <Button size="sm" asChild>
-                <a href="/congress-arrival" target="_blank" rel="noreferrer">
-                  <Link2 className="mr-2 h-4 w-4" />
-                  Open
-                </a>
-              </Button>
+              <a
+                href="/congress-arrival"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:translate-y-[1px] disabled:pointer-events-none disabled:opacity-50 h-9 rounded-md px-3 border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+              >
+                <Link2 className="mr-2 h-4 w-4" />
+                Open
+              </a>
             </div>
           </div>
         </div>

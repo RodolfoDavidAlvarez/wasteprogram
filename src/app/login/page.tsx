@@ -40,6 +40,22 @@ export default function LoginPage() {
       }
 
       if (data.user) {
+        // Create/update user profile in database
+        try {
+          await fetch("/api/auth/create-user-profile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: data.user.id,
+              email: data.user.email,
+              name: data.user.email?.split("@")[0] || "User",
+            }),
+          });
+        } catch (profileError) {
+          console.error("Failed to create user profile:", profileError);
+          // Continue anyway - profile can be created later
+        }
+
         // Refresh the page to update auth state
         router.refresh();
         router.push("/admin");
