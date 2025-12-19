@@ -41,41 +41,50 @@ type DayData = {
 export function DeliveryChart({ loads }: DeliveryChartProps) {
   const [selectedDay, setSelectedDay] = useState<DayData | null>(null);
 
-  // Calculate last 7 days data
+  // Calculate last 7 business days data (skip weekends)
   const chartData = useMemo(() => {
     const now = new Date();
+    now.setHours(0, 0, 0, 0);
     const data: DayData[] = [];
 
-    // Get the last 7 days including today
-    for (let i = 6; i >= 0; i--) {
+    // Get the last 7 business days (Mon-Fri only)
+    const daysToShow = 7;
+    let daysBack = 0;
+
+    while (data.length < daysToShow) {
       const date = new Date(now);
-      date.setDate(now.getDate() - i);
+      date.setDate(now.getDate() - daysBack);
       date.setHours(0, 0, 0, 0);
 
-      const dateStr = date.toISOString().split("T")[0];
-      const dayLabel = date.toLocaleDateString("en-US", { weekday: "short" });
-      const dayNum = date.getDate();
-      const isToday = i === 0;
+      const dayOfWeek = date.getDay();
+      // Skip Saturday (6) and Sunday (0)
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        const dateStr = date.toISOString().split("T")[0];
+        const dayLabel = date.toLocaleDateString("en-US", { weekday: "short" });
+        const dayNum = date.getDate();
+        const isToday = daysBack === 0;
 
-      // Filter loads for this day
-      const dayLoads = loads.filter((load) => {
-        const loadDate = new Date(load.scheduledDate);
-        loadDate.setHours(0, 0, 0, 0);
-        return loadDate.getTime() === date.getTime();
-      });
+        // Filter loads for this day
+        const dayLoads = loads.filter((load) => {
+          const loadDate = new Date(load.scheduledDate);
+          loadDate.setHours(0, 0, 0, 0);
+          return loadDate.getTime() === date.getTime();
+        });
 
-      const delivered = dayLoads.filter((l) => l.isDelivered).length;
-      const scheduled = dayLoads.filter((l) => !l.isDelivered).length;
+        const delivered = dayLoads.filter((l) => l.isDelivered).length;
+        const scheduled = dayLoads.filter((l) => !l.isDelivered).length;
 
-      data.push({
-        date: dateStr,
-        dayLabel: isToday ? "Today" : `${dayLabel} ${dayNum}`,
-        delivered,
-        scheduled,
-        total: delivered + scheduled,
-        isToday,
-        loads: dayLoads,
-      });
+        data.unshift({
+          date: dateStr,
+          dayLabel: isToday ? "Today" : `${dayLabel} ${dayNum}`,
+          delivered,
+          scheduled,
+          total: delivered + scheduled,
+          isToday,
+          loads: dayLoads,
+        });
+      }
+      daysBack++;
     }
 
     return data;
@@ -129,11 +138,11 @@ export function DeliveryChart({ loads }: DeliveryChartProps) {
       <div className="bg-white rounded-xl border border-gray-200 p-4">
         <div className="flex items-center gap-2 mb-4">
           <TruckIcon className="h-5 w-5 text-gray-500" />
-          <h3 className="font-semibold text-gray-900">Last 7 Days</h3>
+          <h3 className="font-semibold text-gray-900">Last 7 Business Days</h3>
         </div>
         <div className="text-center py-8 text-gray-400">
           <TruckIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">No deliveries in the last 7 days</p>
+          <p className="text-sm">No deliveries in the last 7 business days</p>
         </div>
       </div>
     );
@@ -144,7 +153,7 @@ export function DeliveryChart({ loads }: DeliveryChartProps) {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <TruckIcon className="h-5 w-5 text-gray-500" />
-          <h3 className="font-semibold text-gray-900">Last 7 Days</h3>
+          <h3 className="font-semibold text-gray-900">Last 7 Business Days</h3>
         </div>
         <div className="flex items-center gap-4 text-xs">
           <div className="flex items-center gap-1.5">

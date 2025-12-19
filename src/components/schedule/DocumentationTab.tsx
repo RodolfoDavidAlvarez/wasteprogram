@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Camera, Loader2, Plus, Trash2 } from "lucide-react";
+import { Camera, Loader2, Plus, Printer, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -135,13 +135,21 @@ export function DocumentationTab() {
     <div className="space-y-4">
       {PinDialogComponent}
 
-      <div className="flex items-center justify-between">
+      {/* Quick Actions */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="text-sm text-gray-500">All documentation (by VR)</div>
         </div>
-        <Button onClick={() => setOpen(true)} className="bg-emerald-600 hover:bg-emerald-700">
-          <Plus className="h-4 w-4 mr-2" /> Add Documentation
-        </Button>
+        <div className="flex items-center gap-2">
+          <Link href="/resources/weigh-ticket">
+            <Button variant="outline" className="border-gray-300">
+              <Printer className="h-4 w-4 mr-2" /> Weigh Ticket Form
+            </Button>
+          </Link>
+          <Button onClick={() => setOpen(true)} className="bg-emerald-600 hover:bg-emerald-700">
+            <Plus className="h-4 w-4 mr-2" /> Add Documentation
+          </Button>
+        </div>
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
