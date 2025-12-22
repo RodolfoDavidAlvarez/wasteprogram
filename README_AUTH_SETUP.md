@@ -84,3 +84,5 @@ To add more admin users, you can:
 3. Use the Supabase dashboard to invite users via email
 
 Then create a corresponding record in `wd_users` table with the `authUserId` linking to the Supabase Auth user ID.
+
+

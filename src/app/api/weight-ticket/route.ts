@@ -24,20 +24,34 @@ function formatLbs(weight?: number) {
   return `${new Intl.NumberFormat("en-US").format(Math.round(weight))} lbs`;
 }
 
+// Escape HTML entities to prevent XSS in email content
+function escapeHtml(str?: string): string {
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// Helper to safely display a field value with HTML escaping
+function safeValue(value?: string, fallback = "N/A"): string {
+  return escapeHtml(value) || fallback;
+}
+
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as TicketPayload;
 
-    const gross = Number(body.grossWeight);
-    const tare = Number(body.tareWeight);
-    const net = Number.isFinite(gross) && Number.isFinite(tare) ? gross - tare : undefined;
-
-    if (!Number.isFinite(gross) || !Number.isFinite(tare)) {
-      return NextResponse.json(
-        { error: "Please provide numeric grossWeight and tareWeight (lbs)." },
-        { status: 400 },
-      );
-    }
+    const gross = body.grossWeight !== undefined && body.grossWeight !== null ? Number(body.grossWeight) : undefined;
+    const tare = body.tareWeight !== undefined && body.tareWeight !== null ? Number(body.tareWeight) : undefined;
+    const net = 
+      gross !== undefined && tare !== undefined && Number.isFinite(gross) && Number.isFinite(tare)
+        ? gross - tare
+        : body.netWeight !== undefined && body.netWeight !== null && Number.isFinite(Number(body.netWeight))
+          ? Number(body.netWeight)
+          : undefined;
 
     const apiKey = process.env.RESEND_API_KEY;
     const fromEmail = process.env.FROM_EMAIL || "Soil Seed & Water <ralvarez@soilseedandwater.com>";
@@ -71,19 +85,22 @@ export async function POST(request: Request) {
       `Notes: ${body.notes ?? "—"}`,
     ];
 
+    // Build HTML with properly escaped user inputs to prevent XSS
+    const safeNotes = body.notes ? escapeHtml(body.notes).replace(/\n/g, "<br/>") : "—";
+
     const html = `
       <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.6;color:#111827">
         <h2 style="margin:0 0 12px;font-size:18px;color:#065f46">New Weigh Ticket Submitted</h2>
         <table style="border-collapse:collapse;width:100%;font-size:14px">
           <tbody>
-            <tr><td style="padding:6px 8px;font-weight:600;color:#374151">Ticket #</td><td style="padding:6px 8px;border-left:1px solid #e5e7eb">${body.ticketNumber ?? "N/A"}</td></tr>
-            <tr><td style="padding:6px 8px;font-weight:600;color:#374151">Date</td><td style="padding:6px 8px;border-left:1px solid #e5e7eb">${body.date ?? "N/A"}</td></tr>
-            <tr><td style="padding:6px 8px;font-weight:600;color:#374151">Time In / Out</td><td style="padding:6px 8px;border-left:1px solid #e5e7eb">${body.timeIn || "—"} / ${body.timeOut || "—"}</td></tr>
-            <tr><td style="padding:6px 8px;font-weight:600;color:#374151">Carrier / Driver</td><td style="padding:6px 8px;border-left:1px solid #e5e7eb">${body.carrierCompany || "N/A"} / ${body.driverName || "N/A"}</td></tr>
-            <tr><td style="padding:6px 8px;font-weight:600;color:#374151">Truck / Trailer</td><td style="padding:6px 8px;border-left:1px solid #e5e7eb">${body.truckNumber || "N/A"} / ${body.trailerNumber || "N/A"}</td></tr>
-            <tr><td style="padding:6px 8px;font-weight:600;color:#374151">Reference / BOL</td><td style="padding:6px 8px;border-left:1px solid #e5e7eb">${body.referenceNumber || "N/A"}</td></tr>
-            <tr><td style="padding:6px 8px;font-weight:600;color:#374151">Material</td><td style="padding:6px 8px;border-left:1px solid #e5e7eb">${body.materialType || "N/A"}</td></tr>
-            <tr><td style="padding:6px 8px;font-weight:600;color:#374151">Origin / Destination</td><td style="padding:6px 8px;border-left:1px solid #e5e7eb">${body.origin || "N/A"} / ${body.destination || "N/A"}</td></tr>
+            <tr><td style="padding:6px 8px;font-weight:600;color:#374151">Ticket #</td><td style="padding:6px 8px;border-left:1px solid #e5e7eb">${safeValue(body.ticketNumber)}</td></tr>
+            <tr><td style="padding:6px 8px;font-weight:600;color:#374151">Date</td><td style="padding:6px 8px;border-left:1px solid #e5e7eb">${safeValue(body.date)}</td></tr>
+            <tr><td style="padding:6px 8px;font-weight:600;color:#374151">Time In / Out</td><td style="padding:6px 8px;border-left:1px solid #e5e7eb">${safeValue(body.timeIn, "—")} / ${safeValue(body.timeOut, "—")}</td></tr>
+            <tr><td style="padding:6px 8px;font-weight:600;color:#374151">Carrier / Driver</td><td style="padding:6px 8px;border-left:1px solid #e5e7eb">${safeValue(body.carrierCompany)} / ${safeValue(body.driverName)}</td></tr>
+            <tr><td style="padding:6px 8px;font-weight:600;color:#374151">Truck / Trailer</td><td style="padding:6px 8px;border-left:1px solid #e5e7eb">${safeValue(body.truckNumber)} / ${safeValue(body.trailerNumber)}</td></tr>
+            <tr><td style="padding:6px 8px;font-weight:600;color:#374151">Reference / BOL</td><td style="padding:6px 8px;border-left:1px solid #e5e7eb">${safeValue(body.referenceNumber)}</td></tr>
+            <tr><td style="padding:6px 8px;font-weight:600;color:#374151">Material</td><td style="padding:6px 8px;border-left:1px solid #e5e7eb">${safeValue(body.materialType)}</td></tr>
+            <tr><td style="padding:6px 8px;font-weight:600;color:#374151">Origin / Destination</td><td style="padding:6px 8px;border-left:1px solid #e5e7eb">${safeValue(body.origin)} / ${safeValue(body.destination)}</td></tr>
             <tr><td style="padding:6px 8px;font-weight:600;color:#374151">Gross</td><td style="padding:6px 8px;border-left:1px solid #e5e7eb">${formatLbs(gross)}</td></tr>
             <tr><td style="padding:6px 8px;font-weight:600;color:#374151">Tare</td><td style="padding:6px 8px;border-left:1px solid #e5e7eb">${formatLbs(tare)}</td></tr>
             <tr><td style="padding:6px 8px;font-weight:600;color:#065f46">Net</td><td style="padding:6px 8px;border-left:1px solid #e5e7eb;color:#065f46;font-weight:700">${formatLbs(net)}</td></tr>
@@ -91,7 +108,7 @@ export async function POST(request: Request) {
         </table>
         <div style="margin-top:12px;padding:10px;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb">
           <div style="font-weight:600;color:#374151;margin-bottom:6px">Notes</div>
-          <div style="color:#4b5563">${body.notes ? body.notes.replace(/\n/g, "<br/>") : "—"}</div>
+          <div style="color:#4b5563">${safeNotes}</div>
         </div>
       </div>
     `;

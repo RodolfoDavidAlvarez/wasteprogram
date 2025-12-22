@@ -65,7 +65,7 @@ export function ClientForm({ initialData }: ClientFormProps) {
       }
 
       const client = await response.json()
-      router.push(`/clients/${client.id}`)
+      router.push(`/admin/clients/${client.id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
     } finally {

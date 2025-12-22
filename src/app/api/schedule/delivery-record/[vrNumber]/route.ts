@@ -31,6 +31,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           scheduledDate: now,
           notes: null,
           photoUrls: "[]",
+          weightTicketUrls: "[]",
           createdAt: now,
           updatedAt: now,
         })
@@ -41,13 +42,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       record = newRecord;
     }
 
-    // Parse photoUrls for the response
+    // Parse photoUrls and weightTicketUrls for the response
     const photoUrls = record.photoUrls ? JSON.parse(record.photoUrls) : [];
+    const weightTicketUrls = record.weightTicketUrls ? JSON.parse(record.weightTicketUrls) : [];
 
     return NextResponse.json({
       record: {
         ...record,
         photoUrls,
+        weightTicketUrls,
       },
     });
   } catch (error: unknown) {

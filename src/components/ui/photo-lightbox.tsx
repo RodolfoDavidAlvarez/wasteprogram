@@ -161,10 +161,10 @@ export function PhotoLightbox({
         <div
           className="relative transition-transform duration-200"
           style={{
-            width: isSideways ? "70vh" : "100vw",
-            height: isSideways ? "100vw" : "70vh",
-            maxWidth: isSideways ? "70vh" : "100vw",
-            maxHeight: isSideways ? "100vw" : "70vh",
+            width: isSideways ? "60vh" : "85vw",
+            height: isSideways ? "85vw" : "75vh",
+            maxWidth: isSideways ? "60vh" : "1200px",
+            maxHeight: isSideways ? "1200px" : "75vh",
             transform: `scale(${zoom}) rotate(${rotation}deg)`,
           }}
         >

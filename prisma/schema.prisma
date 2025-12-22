@@ -404,6 +404,7 @@ model DeliveryRecord {
   deliveredAt     DateTime?
   deliveredBy     String?            // Who marked it delivered
   photoUrls       String?            // JSON array of Supabase storage URLs
+  weightTicketUrls String?           // JSON array of weight ticket document URLs (PDF/HTML)
   notes           String?
   tonnage         Float     @default(20)
   scheduledDate   DateTime

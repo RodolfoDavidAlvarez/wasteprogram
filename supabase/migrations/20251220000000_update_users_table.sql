@@ -13,3 +13,5 @@ WHERE "authUserId" IS NOT NULL;
 -- Add phone column (optional)
 ALTER TABLE "wd_users" 
 ADD COLUMN IF NOT EXISTS "phone" TEXT;
+
+

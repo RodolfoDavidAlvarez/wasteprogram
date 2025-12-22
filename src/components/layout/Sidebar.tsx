@@ -19,17 +19,17 @@ import {
 } from "lucide-react"
 
 const navigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Scale House", href: "/scale", icon: Scale },
-  { name: "New Intake", href: "/intake/new", icon: FileInput },
-  { name: "Intakes", href: "/intakes", icon: Truck },
-  { name: "Clients", href: "/clients", icon: Users },
+  { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "Scale House", href: "/admin/scale", icon: Scale },
+  { name: "New Intake", href: "/admin/intake/new", icon: FileInput },
+  { name: "Intakes", href: "/admin/intakes", icon: Truck },
+  { name: "Clients", href: "/admin/clients", icon: Users },
   { name: "Schedule", href: "/schedule", icon: Calendar },
-  { name: "Delivery Records", href: "/schedule/records", icon: FileText },
-  { name: "Reports", href: "/reports", icon: BarChart3 },
-  { name: "Environmental Impact", href: "/impact", icon: Leaf },
-  { name: "Contamination Log", href: "/contamination", icon: AlertTriangle },
-  { name: "Settings", href: "/settings", icon: Settings },
+  { name: "Delivery Records", href: "/admin/records", icon: FileText },
+  { name: "Reports", href: "/admin/reports", icon: BarChart3 },
+  { name: "Environmental Impact", href: "/admin/impact", icon: Leaf },
+  { name: "Contamination Log", href: "/admin/contamination", icon: AlertTriangle },
+  { name: "Settings", href: "/admin/settings", icon: Settings },
 ]
 
 export function Sidebar() {

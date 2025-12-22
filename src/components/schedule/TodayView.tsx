@@ -1,11 +1,9 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
-import { CheckCircle2, Clock, Truck, ChevronLeft, ChevronRight, Camera, Image as ImageIcon, Loader2, X, RotateCcw } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { usePinProtection } from "@/components/ui/pin-dialog";
+import { CheckCircle2, Clock, Truck, ChevronLeft, ChevronRight, X, RotateCcw } from "lucide-react";
+import { DeliveryRecordSidebar } from "./DeliveryRecordSidebar";
 
 type LoadItem = {
   id: string;
@@ -19,6 +17,7 @@ type LoadItem = {
   isToday: boolean;
   scheduledDate: Date | string;
   client?: { companyName: string };
+  deliveryType?: string;
 };
 
 type PhotoData = {
@@ -27,6 +26,8 @@ type PhotoData = {
   status: string;
   deliveredAt: string | null;
   loadNumber: number;
+  notes: string | null;
+  weightTicketUrls: string[];
 };
 
 interface TodayViewProps {
@@ -34,26 +35,9 @@ interface TodayViewProps {
   photosByVr?: Record<string, PhotoData>;
 }
 
-type DeliveryRecordUi = {
-  vrNumber: string;
-  status: "scheduled" | "delivered" | string;
-  deliveredAt: string | null;
-  photoUrls: string[];
-};
-
 export function TodayView({ allLoads, photosByVr = {} }: TodayViewProps) {
-  const router = useRouter();
-  const [selectedLoad, setSelectedLoad] = useState<LoadItem | null>(null);
+  const [selectedVrNumber, setSelectedVrNumber] = useState<string | null>(null);
   const [dayOffset, setDayOffset] = useState(0);
-  const [deliveryRecord, setDeliveryRecord] = useState<DeliveryRecordUi | null>(null);
-  const [photos, setPhotos] = useState<string[]>([]);
-  const [uploading, setUploading] = useState(false);
-  const [marking, setMarking] = useState(false);
-  const [showPhotos, setShowPhotos] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // PIN protection hook
-  const { requestPin, PinDialogComponent } = usePinProtection();
 
   // Photo lightbox state
   const [lightboxPhotos, setLightboxPhotos] = useState<string[]>([]);
@@ -98,6 +82,31 @@ export function TodayView({ allLoads, photosByVr = {} }: TodayViewProps) {
     day: "numeric",
   });
 
+  // Helper function to determine if a load is "Loading" or "Delivery"
+  const getLoadType = (load: LoadItem, photoData: PhotoData | null): "Loading" | "Delivery" => {
+    // Check notes for keywords that indicate loading operations
+    const notes = photoData?.notes || load.note || "";
+    const lowerNotes = notes.toLowerCase();
+    
+    // If notes mention "empty and full weight" or "license plate", it's a loading operation
+    if (lowerNotes.includes("empty and full weight") || lowerNotes.includes("license plate")) {
+      return "Loading";
+    }
+    
+    // Check deliveryType
+    if (load.deliveryType === "ssw_pickup" || load.deliveryType === "outbound_pickup") {
+      return "Loading";
+    }
+    
+    // Default: client_delivery means delivery TO the facility
+    if (load.deliveryType === "client_delivery") {
+      return "Delivery";
+    }
+    
+    // Default to Delivery if unclear
+    return "Delivery";
+  };
+
   // Filter loads for the selected day
   // For today (offset 0), use the pre-calculated isToday flag to avoid timezone issues
   // For other days, compare the dateStr which is already formatted consistently
@@ -127,122 +136,26 @@ export function TodayView({ allLoads, photosByVr = {} }: TodayViewProps) {
   const todayPending = loads.length - todayDelivered;
 
   // Fetch delivery record when load is selected
-  useEffect(() => {
-    if (selectedLoad?.vrNumber) {
-      fetch(`/api/schedule/delivery-record/${selectedLoad.vrNumber}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.record) {
-            setDeliveryRecord(data.record);
-            setPhotos(data.record.photoUrls || []);
-          } else {
-            setDeliveryRecord(null);
-            setPhotos([]);
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching delivery record:", error);
-        });
-    } else {
-      setDeliveryRecord(null);
-      setPhotos([]);
-    }
-  }, [selectedLoad?.vrNumber]);
 
-  // Handle photo upload
-  const handlePhotoUpload = async (file: File) => {
-    if (!selectedLoad?.vrNumber) return;
-
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("vrNumber", selectedLoad.vrNumber);
-
-      const response = await fetch("/api/schedule/upload-photo", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setPhotos((prev) => [...prev, data.photoUrl]);
-      }
-    } catch (error) {
-      console.error("Error uploading photo:", error);
-      alert("Failed to upload photo. Please try again.");
-    } finally {
-      setUploading(false);
-    }
+  const handleSidebarClose = () => {
+    setSelectedVrNumber(null);
   };
 
-  // Handle camera/file selection
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handlePhotoUpload(file);
-    }
-  };
-
-  // Handle mark as delivered (actual logic)
-  const doMarkDelivered = async () => {
-    if (!selectedLoad?.vrNumber) return;
-
-    setMarking(true);
-    try {
-      // Ensure delivery record exists first
-      if (!deliveryRecord) {
-        await fetch(`/api/schedule/delivery-record/${selectedLoad.vrNumber}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            vrNumber: selectedLoad.vrNumber,
-            loadNumber: selectedLoad.loadNumber,
-            scheduledDate: selectedLoad.scheduledDate,
-            tonnage: 20,
-          }),
-        });
-      }
-
-      // Mark as delivered
-      const response = await fetch("/api/schedule/mark-delivered", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          vrNumber: selectedLoad.vrNumber,
-          deliveredBy: "Field Team",
-        }),
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        // Update local state optimistically
-        setDeliveryRecord(data.record);
-        // Close modal
-        setSelectedLoad(null);
-        // Show success message
-        alert("Load marked as delivered successfully!");
-      }
-    } catch (error) {
-      console.error("Error marking as delivered:", error);
-      alert("Failed to mark as delivered. Please try again.");
-    } finally {
-      setMarking(false);
-    }
-  };
-
-  // Handle mark as delivered (with PIN protection)
-  const handleMarkDelivered = () => {
-    if (!selectedLoad?.vrNumber) return;
-    requestPin(doMarkDelivered, {
-      title: "Confirm Delivery",
-      description: "Enter admin PIN to mark this load as delivered",
-    });
+  const handleSidebarUpdate = () => {
+    // Refresh the view by triggering a re-render
+    // The parent component should handle the refresh
+    window.location.reload();
   };
 
   return (
     <div className="space-y-6">
-      {PinDialogComponent}
+      {/* Delivery Record Sidebar */}
+      <DeliveryRecordSidebar
+        vrNumber={selectedVrNumber}
+        loadNumber={selectedVrNumber ? allLoads.find((l) => l.vrNumber === selectedVrNumber)?.loadNumber : undefined}
+        onClose={handleSidebarClose}
+        onUpdate={handleSidebarUpdate}
+      />
       {/* Day Header with Navigation */}
       <div className="flex items-center justify-between py-4 sm:py-6">
         {/* Previous Day Button */}
@@ -319,11 +232,11 @@ export function TodayView({ allLoads, photosByVr = {} }: TodayViewProps) {
                 <div
                   key={load.id}
                   onClick={() => {
+                    // Only open sidebar if VR number exists
+                    // The sidebar requires a VR number to fetch the record
                     if (load.vrNumber) {
-                      router.push(`/schedule/records/${encodeURIComponent(load.vrNumber)}`);
-                      return;
+                      setSelectedVrNumber(load.vrNumber);
                     }
-                    setSelectedLoad(load);
                   }}
                   className={`rounded-xl border-2 p-4 transition-all cursor-pointer active:scale-[0.99] ${
                     actuallyDelivered
@@ -366,7 +279,7 @@ export function TodayView({ allLoads, photosByVr = {} }: TodayViewProps) {
 
                     {/* Content - Middle */}
                     <div className="flex-1 min-w-0">
-                      {/* VR Number */}
+                      {/* VR Number and Load Type */}
                       <div className="flex items-center gap-2 mb-1">
                         {actuallyDelivered ? (
                           <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />
@@ -376,6 +289,21 @@ export function TodayView({ allLoads, photosByVr = {} }: TodayViewProps) {
                         <span className="font-mono text-base sm:text-lg font-bold text-gray-900 truncate">
                           {load.vrNumber ? `VR ${load.vrNumber}` : "VR# Pending"}
                         </span>
+                        {/* Loading vs Delivery Badge */}
+                        {(() => {
+                          const loadType = getLoadType(load, photoData);
+                          return (
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${
+                                loadType === "Loading"
+                                  ? "bg-blue-100 text-blue-700 border border-blue-200"
+                                  : "bg-purple-100 text-purple-700 border border-purple-200"
+                              }`}
+                            >
+                              {loadType}
+                            </span>
+                          );
+                        })()}
                       </div>
 
                       {/* Status line */}
@@ -396,8 +324,12 @@ export function TodayView({ allLoads, photosByVr = {} }: TodayViewProps) {
                         )}
                       </div>
 
-                      {/* Notes */}
-                      {load.note && <p className="text-xs text-gray-500 mt-1 line-clamp-1">{load.note}</p>}
+                      {/* Notes - Show delivery record notes if available, otherwise show schedule note */}
+                      {(photoData?.notes || load.note) && (
+                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                          {photoData?.notes || load.note}
+                        </p>
+                      )}
                     </div>
 
                     {/* Right Column - Truck Load # and Badge */}
@@ -432,154 +364,6 @@ export function TodayView({ allLoads, photosByVr = {} }: TodayViewProps) {
         </>
       )}
 
-      {/* Load Detail Modal */}
-      <Dialog
-        open={selectedLoad !== null}
-        onOpenChange={(open) => {
-          if (!open) setSelectedLoad(null);
-        }}
-      >
-        <DialogContent className="max-w-md mx-2 sm:mx-auto rounded-xl">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-bold">{selectedLoad?.vrNumber ? `VR ${selectedLoad.vrNumber}` : "Truck Load Details"}</DialogTitle>
-          </DialogHeader>
-
-          {selectedLoad && (
-            <div className="space-y-6 pt-2">
-              {/* Truck Load Info */}
-              <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-500">Truck Load #</span>
-                  <span className="font-bold text-gray-900">{selectedLoad.loadNumber}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-500">VR Number</span>
-                  <span className="font-mono font-bold text-gray-900">{selectedLoad.vrNumber || "Pending"}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-500">Status</span>
-                  <span className={`font-semibold ${selectedLoad.isDelivered ? "text-emerald-600" : "text-amber-600"}`}>
-                    {selectedLoad.isDelivered ? "Delivered" : "Scheduled"}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b">
-                  <span className="text-gray-500">Tonnage</span>
-                  <span className="font-bold text-gray-900">20 tons</span>
-                </div>
-                {selectedLoad.eta && !selectedLoad.isDelivered && (
-                  <div className="flex justify-between items-center py-2 border-b">
-                    <span className="text-gray-500">ETA</span>
-                    <span className="font-semibold text-gray-900">{selectedLoad.eta}</span>
-                  </div>
-                )}
-                {selectedLoad.note && (
-                  <div className="py-2">
-                    <span className="text-gray-500 text-sm">Notes</span>
-                    <p className="text-gray-900 mt-1">{selectedLoad.note}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Action Buttons */}
-              {selectedLoad.isDelivered || deliveryRecord?.status === "delivered" ? (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 text-center">
-                  <CheckCircle2 className="h-8 w-8 text-emerald-600 mx-auto mb-2" />
-                  <p className="font-semibold text-emerald-700">This truck load has been delivered</p>
-                  {deliveryRecord?.deliveredAt && (
-                    <p className="text-xs text-emerald-600 mt-1">{new Date(deliveryRecord.deliveredAt).toLocaleString()}</p>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {/* Photo Documentation */}
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* Take Photo Button */}
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploading || !selectedLoad.vrNumber}
-                      className="py-3 px-4 rounded-lg bg-blue-50 border-2 border-blue-200 text-blue-700 font-semibold flex items-center justify-center gap-2 hover:bg-blue-100 active:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />}
-                      <span className="text-sm">Take Photo</span>
-                    </button>
-
-                    {/* View Photos Button */}
-                    <button
-                      onClick={() => setShowPhotos(true)}
-                      disabled={photos.length === 0}
-                      className="py-3 px-4 rounded-lg bg-gray-50 border-2 border-gray-200 text-gray-700 font-semibold flex items-center justify-center gap-2 hover:bg-gray-100 active:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ImageIcon className="h-5 w-5" />
-                      <span className="text-sm">Photos {photos.length > 0 && `(${photos.length})`}</span>
-                    </button>
-                  </div>
-
-                  {/* Hidden file input */}
-                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
-
-                  {/* Mark as Delivered Button */}
-                  <button
-                    onClick={handleMarkDelivered}
-                    disabled={marking || !selectedLoad.vrNumber}
-                    className="w-full py-4 px-6 rounded-xl bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white font-bold text-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg"
-                  >
-                    {marking ? (
-                      <>
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        Marking as Delivered...
-                      </>
-                    ) : (
-                      <>
-                        <Truck className="h-5 w-5" />
-                        Mark as Delivered
-                      </>
-                    )}
-                  </button>
-
-                  <p className="text-xs text-gray-500 text-center">Photos are optional. You can mark as delivered without documentation.</p>
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Photo Gallery Dialog */}
-      <Dialog open={showPhotos} onOpenChange={setShowPhotos}>
-        <DialogContent className="max-w-2xl mx-2 sm:mx-auto rounded-xl">
-          <DialogHeader>
-            <DialogTitle>Delivery Photos ({photos.length})</DialogTitle>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 max-h-[60vh] overflow-y-auto p-2">
-            {photos.map((photoUrl, index) => (
-              <a
-                key={index}
-                href={photoUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="relative group block"
-              >
-                <div className="relative aspect-[4/3] rounded-lg overflow-hidden border-2 border-gray-200 group-hover:border-blue-400 transition-colors">
-                  <Image
-                    src={photoUrl}
-                    alt={`Delivery photo ${index + 1}`}
-                    fill
-                    className="object-cover"
-                    unoptimized
-                  />
-                </div>
-                <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">Photo {index + 1}</div>
-              </a>
-            ))}
-          </div>
-          {photos.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              <ImageIcon className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-              <p>No photos uploaded yet</p>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
 
       {/* Full-screen Photo Lightbox - Mobile Optimized */}
       {showLightbox && (

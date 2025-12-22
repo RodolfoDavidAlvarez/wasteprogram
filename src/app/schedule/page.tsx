@@ -1,15 +1,16 @@
-import { Tabs } from "@/components/ui/tabs";
 import { Calendar } from "@/components/schedule/Calendar";
 import { OverviewTable } from "@/components/schedule/OverviewTable";
 import { TodayView } from "@/components/schedule/TodayView";
 import { DeliveryChart } from "@/components/schedule/DeliveryChart";
+import { WasteIntake } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { supabase } from "@/lib/supabase";
-import Image from "next/image";
 import { ScheduleTheme } from "./ScheduleTheme";
 import { DocumentationTab } from "@/components/schedule/DocumentationTab";
-import { LoginButton } from "@/components/layout/LoginButton";
 import { ArrivalQuickLinks } from "@/components/schedule/ArrivalQuickLinks";
+import { ScheduleNavigation } from "@/components/schedule/ScheduleNavigation";
+import { ScheduleContent } from "@/components/schedule/ScheduleContent";
+import { WeighTicketTab } from "@/components/schedule/WeighTicketTab";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -237,6 +238,22 @@ function getManualSchedule(): {
       deliveryType: "client_delivery",
       wasteType: "off-spec pet food",
     },
+    // Thursday 12/18 - Tyson Tolleson delivery (separate from Nestle loads) - DELIVERED
+    {
+      id: "vr-121825-90",
+      ticketNumber: "VR121825-90",
+      vrNumber: "121825-90",
+      scheduledDate: date(18),
+      scheduledTimeWindow: "14:30",
+      eta: "14:30",
+      note: "Tyson Tolleson, AZ delivery - separate from Nestle loads",
+      estimatedWeight: 0,
+      client: { companyName: "Vanguard (Tyson/Tolleson)", accountNumber: "" },
+      statusTag: "arrived",
+      status: "received",
+      deliveryType: "client_delivery",
+      wasteType: "off-spec pet food",
+    },
 
     // =============================================================================
     // BATCH 3: 12 ADDITIONAL DOG FOOD LOADS (VR numbers pending from Casey)
@@ -306,11 +323,11 @@ function getManualSchedule(): {
       wasteType: "waste",
     },
 
-    // Monday 12/22 - 3 loads (VR TBD)
+    // Monday 12/22 - 2 trucks being loaded today
     {
       id: "pending-1222-1",
       ticketNumber: "PENDING-1222-1",
-      vrNumber: null,
+      vrNumber: "PENDING-1222-1",
       scheduledDate: date(22),
       scheduledTimeWindow: "06:00-14:30",
       note: "Additional dog food load #4 of 12 - VR# pending",
@@ -324,7 +341,7 @@ function getManualSchedule(): {
     {
       id: "pending-1222-2",
       ticketNumber: "PENDING-1222-2",
-      vrNumber: null,
+      vrNumber: "PENDING-1222-2",
       scheduledDate: date(22),
       scheduledTimeWindow: "06:00-14:30",
       note: "Additional dog food load #5 of 12 - VR# pending",
@@ -459,185 +476,180 @@ function getManualSchedule(): {
 }
 
 async function getScheduleData() {
-  // ALWAYS use manual schedule for Vanguard/Purina project tracking
-  // TODO: Switch to DB once production DATABASE_URL is configured
-  return getManualSchedule();
+  const manualData = getManualSchedule();
 
-  const now = new Date();
-  const startOfWeek = new Date(now);
-  startOfWeek.setDate(now.getDate() - now.getDay());
-  startOfWeek.setHours(0, 0, 0, 0);
+  // If there is no database configured yet, fall back to the manual schedule
+  if (!process.env.DATABASE_URL) {
+    return manualData;
+  }
 
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 6);
-  endOfWeek.setHours(23, 59, 59, 999);
+  try {
+    type IntakeWithClient = WasteIntake & {
+      client: { companyName: string; accountNumber: string };
+    };
 
-  // Get this week's scheduled intakes
-  const weekIntakesRaw = await prisma.wasteIntake.findMany({
-    where: {
-      status: { in: ["approved", "scheduled", "in_transit"] },
-      scheduledDate: {
-        gte: startOfWeek,
-        lte: endOfWeek,
+    // Map Prisma records into the CalendarIntake shape used by the UI
+    const mapIntake = (intake: IntakeWithClient): CalendarIntake => {
+      const statusTag =
+        intake.status === "received"
+          ? "arrived"
+          : intake.status === "in_transit"
+            ? "delayed"
+            : ["approved", "scheduled", "pending"].includes(intake.status)
+              ? "scheduled"
+              : null;
+
+      return {
+        id: intake.id,
+        ticketNumber: intake.ticketNumber,
+        vrNumber: intake.ticketNumber, // Use ticket number as VR placeholder until VRs are stored
+        scheduledDate: intake.scheduledDate,
+        scheduledTimeWindow: intake.scheduledTimeWindow,
+        estimatedWeight: intake.estimatedWeight ?? 0,
+        client: {
+          companyName: intake.client.companyName,
+          accountNumber: intake.client.accountNumber,
+        },
+        status: intake.status,
+        statusTag,
+        deliveryType: intake.deliveryType,
+        pickupAddress: intake.pickupAddress,
+        wasteType: intake.wasteType,
+        note: intake.specialInstructions || intake.processingNote,
+      };
+    };
+
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
+
+    // Get this week's scheduled intakes
+    const weekIntakesRaw = await prisma.wasteIntake.findMany({
+      where: {
+        status: { in: ["approved", "scheduled", "in_transit"] },
+        scheduledDate: {
+          gte: startOfWeek,
+          lte: endOfWeek,
+        },
       },
-    },
-    include: {
-      client: {
-        select: { companyName: true, accountNumber: true },
+      include: {
+        client: {
+          select: { companyName: true, accountNumber: true },
+        },
       },
-    },
-    orderBy: { scheduledDate: "asc" },
-  });
-  const weekIntakes: CalendarIntake[] = weekIntakesRaw.map((intake) => ({
-    id: intake.id,
-    ticketNumber: intake.ticketNumber,
-    vrNumber: null,
-    scheduledDate: intake.scheduledDate,
-    scheduledTimeWindow: intake.scheduledTimeWindow,
-    estimatedWeight: intake.estimatedWeight,
-    client: {
-      companyName: intake.client.companyName,
-      accountNumber: intake.client.accountNumber,
-    },
-    status: intake.status,
-    deliveryType: intake.deliveryType,
-    pickupAddress: intake.pickupAddress,
-    wasteType: intake.wasteType,
-  }));
+      orderBy: { scheduledDate: "asc" },
+    });
+    const weekIntakes: CalendarIntake[] = weekIntakesRaw.map(mapIntake);
 
-  // Get upcoming (next 30 days)
-  const upcomingIntakesRaw = await prisma.wasteIntake.findMany({
-    where: {
-      status: { in: ["pending", "approved", "scheduled"] },
-      scheduledDate: {
-        gte: now,
-        lte: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+    // Get upcoming (next 30 days)
+    const upcomingIntakesRaw = await prisma.wasteIntake.findMany({
+      where: {
+        status: { in: ["pending", "approved", "scheduled"] },
+        scheduledDate: {
+          gte: now,
+          lte: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+        },
       },
-    },
-    include: {
-      client: {
-        select: { companyName: true, accountNumber: true },
+      include: {
+        client: {
+          select: { companyName: true, accountNumber: true },
+        },
       },
-    },
-    orderBy: { scheduledDate: "asc" },
-    take: 20,
-  });
-  const upcomingIntakes: CalendarIntake[] = upcomingIntakesRaw.map((intake) => ({
-    id: intake.id,
-    ticketNumber: intake.ticketNumber,
-    vrNumber: null,
-    scheduledDate: intake.scheduledDate,
-    scheduledTimeWindow: intake.scheduledTimeWindow,
-    estimatedWeight: intake.estimatedWeight,
-    client: {
-      companyName: intake.client.companyName,
-      accountNumber: intake.client.accountNumber,
-    },
-    status: intake.status,
-    deliveryType: intake.deliveryType,
-    pickupAddress: intake.pickupAddress,
-    wasteType: intake.wasteType,
-  }));
+      orderBy: { scheduledDate: "asc" },
+      take: 20,
+    });
+    const upcomingIntakes: CalendarIntake[] = upcomingIntakesRaw.map(mapIntake);
 
-  // Get today's intakes
-  const startOfDay = new Date(now);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(now);
-  endOfDay.setHours(23, 59, 59, 999);
+    // Get today's intakes
+    const startOfDay = new Date(now);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(now);
+    endOfDay.setHours(23, 59, 59, 999);
 
-  const todayIntakesRaw = await prisma.wasteIntake.findMany({
-    where: {
-      status: { in: ["approved", "scheduled", "in_transit"] },
-      scheduledDate: {
-        gte: startOfDay,
-        lte: endOfDay,
+    const todayIntakesRaw = await prisma.wasteIntake.findMany({
+      where: {
+        status: { in: ["approved", "scheduled", "in_transit"] },
+        scheduledDate: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
       },
-    },
-    include: {
-      client: {
-        select: { companyName: true, accountNumber: true },
+      include: {
+        client: {
+          select: { companyName: true, accountNumber: true },
+        },
       },
-    },
-    orderBy: { scheduledDate: "asc" },
-  });
-  const todayIntakes: CalendarIntake[] = todayIntakesRaw.map((intake) => ({
-    id: intake.id,
-    ticketNumber: intake.ticketNumber,
-    vrNumber: null,
-    scheduledDate: intake.scheduledDate,
-    scheduledTimeWindow: intake.scheduledTimeWindow,
-    estimatedWeight: intake.estimatedWeight,
-    client: {
-      companyName: intake.client.companyName,
-      accountNumber: intake.client.accountNumber,
-    },
-    status: intake.status,
-    deliveryType: intake.deliveryType,
-    pickupAddress: intake.pickupAddress,
-    wasteType: intake.wasteType,
-  }));
+      orderBy: { scheduledDate: "asc" },
+    });
+    const todayIntakes: CalendarIntake[] = todayIntakesRaw.map(mapIntake);
 
-  // Get all intakes for calendar
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+    // Get all intakes for calendar
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
 
-  const calendarIntakesRaw = await prisma.wasteIntake.findMany({
-    where: {
-      status: { in: ["approved", "scheduled", "in_transit"] },
-      scheduledDate: {
-        gte: startOfMonth,
-        lte: endOfMonth,
+    const calendarIntakesRaw = await prisma.wasteIntake.findMany({
+      where: {
+        status: { in: ["approved", "scheduled", "in_transit"] },
+        scheduledDate: {
+          gte: startOfMonth,
+          lte: endOfMonth,
+        },
       },
-    },
-    include: {
-      client: {
-        select: { companyName: true, accountNumber: true },
+      include: {
+        client: {
+          select: { companyName: true, accountNumber: true },
+        },
       },
-    },
-    orderBy: { scheduledDate: "asc" },
-  });
+      orderBy: { scheduledDate: "asc" },
+    });
 
-  // Transform for calendar component with all needed fields
-  const calendarIntakesWithFields: CalendarIntake[] = calendarIntakesRaw.map((intake) => ({
-    id: intake.id,
-    ticketNumber: intake.ticketNumber,
-    vrNumber: null,
-    scheduledDate: intake.scheduledDate,
-    scheduledTimeWindow: intake.scheduledTimeWindow,
-    estimatedWeight: intake.estimatedWeight,
-    client: {
-      companyName: intake.client.companyName,
-      accountNumber: intake.client.accountNumber,
-    },
-  }));
+    // Transform for calendar component with all needed fields
+    const calendarIntakesWithFields: CalendarIntake[] = calendarIntakesRaw.map(mapIntake);
 
-  return {
-    weekIntakes,
-    upcomingIntakes,
-    todayIntakes,
-    calendarIntakes: calendarIntakesWithFields,
-    startOfWeek,
-  };
+    // If there is no data yet in the database, keep the manual schedule alive
+    if (calendarIntakesWithFields.length === 0) {
+      return manualData;
+    }
+
+    return {
+      weekIntakes,
+      upcomingIntakes,
+      todayIntakes,
+      calendarIntakes: calendarIntakesWithFields,
+      startOfWeek,
+    };
+  } catch (error) {
+    console.error("Failed to load schedule from database, falling back to manual data:", error);
+    return manualData;
+  }
 }
 
 // Fetch all delivery records for photo data (using Supabase client for reliability)
 async function getDeliveryRecordsForPhotos() {
   try {
-    const { data, error } = await supabase.from("wd_delivery_records").select("vrNumber, photoUrls, status, deliveredAt, loadNumber").limit(500);
+    const { data, error } = await supabase.from("wd_delivery_records").select("vrNumber, photoUrls, weightTicketUrls, status, deliveredAt, loadNumber, notes").limit(500);
 
     if (error) throw error;
 
-    // Create a map: vrNumber → { photoUrls, photoCount, status, deliveredAt, loadNumber }
-    const photosByVr: Record<string, { photoUrls: string[]; photoCount: number; status: string; deliveredAt: string | null; loadNumber: number }> =
+    // Create a map: vrNumber → { photoUrls, photoCount, status, deliveredAt, loadNumber, notes, weightTicketUrls }
+    const photosByVr: Record<string, { photoUrls: string[]; photoCount: number; status: string; deliveredAt: string | null; loadNumber: number; notes: string | null; weightTicketUrls: string[] }> =
       {};
     for (const record of data ?? []) {
       const urls = record.photoUrls ? JSON.parse(record.photoUrls) : [];
+      const ticketUrls = record.weightTicketUrls ? JSON.parse(record.weightTicketUrls) : [];
       photosByVr[record.vrNumber] = {
         photoUrls: urls,
         photoCount: urls.length,
         status: record.status,
         deliveredAt: record.deliveredAt,
         loadNumber: record.loadNumber,
+        notes: record.notes,
+        weightTicketUrls: ticketUrls,
       };
     }
     return photosByVr;
@@ -746,35 +758,18 @@ export default async function SchedulePage() {
   return (
     <div className="min-h-screen schedule-theme app-background">
       <ScheduleTheme />
-      {/* Clean Header */}
-      <div className="relative border-b border-border bg-background/75 backdrop-blur">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-primary via-[hsl(var(--ring))] to-transparent"
-        />
-        <div className="px-4 sm:px-6 py-4 sm:py-6">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <div className="inline-flex items-center rounded-lg bg-card shadow-sm ring-1 ring-black/5 px-3 py-2">
-              <div className="relative h-10 sm:h-12 aspect-[2083/729]">
-                <Image
-                  src="/ssw-logo.png"
-                  alt="Soil Seed & Water"
-                  fill
-                  priority
-                  unoptimized
-                  sizes="(min-width: 640px) 137px, 114px"
-                  className="object-contain"
-                />
-              </div>
-            </div>
-            <LoginButton />
-          </div>
-          <div className="max-w-5xl">
-            <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">Waste Scheduled Delivery</h1>
-            <p className="text-sm sm:text-base text-muted-foreground mt-1">Vanguard / Purina Dog Food - Flagstaff</p>
-          </div>
-        </div>
-      </div>
+      {/* Integrated Navigation Bar with Logo, Title, Tabs, and Login */}
+      <ScheduleNavigation
+        tabs={[
+          { label: "Today", value: "today" },
+          { label: "Documentation", value: "docs" },
+          { label: "Overview", value: "summary" },
+          { label: "Calendar", value: "calendar" },
+          { label: "Weigh Ticket", value: "weigh-ticket" },
+        ]}
+        defaultTab="today"
+        persistKey="schedule-active-tab"
+      />
 
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
@@ -782,8 +777,7 @@ export default async function SchedulePage() {
           <div className="mb-4">
             <ArrivalQuickLinks appUrl={appUrl} />
           </div>
-          <Tabs
-            persistKey="schedule-active-tab"
+          <ScheduleContent
             tabs={[
               {
                 label: "Today",
@@ -805,7 +799,14 @@ export default async function SchedulePage() {
                 value: "calendar",
                 content: <Calendar intakes={data.calendarIntakes} />,
               },
+              {
+                label: "Weigh Ticket",
+                value: "weigh-ticket",
+                content: <WeighTicketTab />,
+              },
             ]}
+            persistKey="schedule-active-tab"
+            defaultTab="today"
           />
         </div>
       </div>

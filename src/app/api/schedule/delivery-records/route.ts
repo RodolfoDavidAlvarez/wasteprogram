@@ -14,6 +14,7 @@ export async function GET() {
     const records = (data ?? []).map((r) => ({
       ...r,
       photoUrls: r.photoUrls ? JSON.parse(r.photoUrls) : [],
+      weightTicketUrls: r.weightTicketUrls ? JSON.parse(r.weightTicketUrls) : [],
     }));
 
     return NextResponse.json({ records });
@@ -22,5 +23,8 @@ export async function GET() {
     return NextResponse.json({ error: "Failed to list delivery records" }, { status: 500 });
   }
 }
+
+
+
 
 

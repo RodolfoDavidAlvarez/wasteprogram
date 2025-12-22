@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowRight, Calculator, Download, FileText, Loader2, Send } from "lucide-react";
+import { Calculator, Download, Loader2, Send } from "lucide-react";
 import { generateWeightTicketNumber } from "@/lib/utils";
 
 type FormState = {
@@ -22,6 +22,8 @@ type FormState = {
   notes: string;
 };
 
+const DEFAULT_ORIGIN = "18980 Stanton Rd, Congress, AZ 85332";
+
 export default function WeighTicketPage() {
   const [form, setForm] = useState<FormState>({
     ticketNumber: generateWeightTicketNumber(),
@@ -34,13 +36,14 @@ export default function WeighTicketPage() {
     trailerNumber: "",
     referenceNumber: "",
     materialType: "",
-    origin: "",
+    origin: DEFAULT_ORIGIN,
     destination: "",
     grossWeight: "",
     tareWeight: "",
     notes: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const gross = parseFloat(form.grossWeight);
@@ -60,15 +63,15 @@ export default function WeighTicketPage() {
     setSubmitting(true);
 
     try {
-      const response = await fetch("/api/weight-ticket", {
+      const response = await fetch("/api/weigh-ticket/save-and-email", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           ...form,
-          grossWeight: Number(form.grossWeight),
-          tareWeight: Number(form.tareWeight),
+          grossWeight: form.grossWeight ? Number(form.grossWeight) : undefined,
+          tareWeight: form.tareWeight ? Number(form.tareWeight) : undefined,
           netWeight: net ?? undefined,
         }),
       });
@@ -78,7 +81,15 @@ export default function WeighTicketPage() {
         throw new Error(error?.error || "Failed to submit ticket");
       }
 
-      setStatus({ type: "success", message: "Sent to ralvarez@soilseedandwater.com" });
+      const result = await response.json();
+      if (result.dbSaveFailed) {
+        setStatus({ 
+          type: "success", 
+          message: "Email sent to ralvarez@soilseedandwater.com with PDF attachment! (Note: Could not save to database - connection unavailable)" 
+        });
+      } else {
+        setStatus({ type: "success", message: "Saved to database and emailed to ralvarez@soilseedandwater.com with PDF attachment" });
+      }
       setForm((prev) => ({
         ...prev,
         ticketNumber: generateWeightTicketNumber(),
@@ -90,7 +101,7 @@ export default function WeighTicketPage() {
         trailerNumber: "",
         referenceNumber: "",
         materialType: "",
-        origin: "",
+        origin: DEFAULT_ORIGIN,
         destination: "",
         grossWeight: "",
         tareWeight: "",
@@ -117,202 +128,274 @@ export default function WeighTicketPage() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-gray-50 to-white py-8 px-4">
-      <div className="mx-auto max-w-6xl">
-        <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="bg-white/90 backdrop-blur rounded-2xl shadow-md border border-emerald-100/70 p-6 sm:p-7 lg:p-8">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">Scale House</p>
-                <h1 className="text-2xl font-bold text-gray-900 mt-1">Submit Weigh Ticket</h1>
-                <p className="text-sm text-gray-600 mt-2 leading-relaxed">
-                  Quick submit form - only ticket #, date, driver, material type, and weights required.
-                  <br className="hidden sm:block" /> Net weight auto-calculates. On submit, a copy is emailed.
-                </p>
-              </div>
-              <div className="inline-flex items-center gap-2 self-start rounded-full bg-emerald-50 text-emerald-700 px-3 py-1 text-xs font-semibold border border-emerald-100">
-                <Calculator className="h-4 w-4" />
-                Net = Gross - Tare
-              </div>
-            </div>
+  const handleSaveAndDownload = async () => {
+    setStatus(null);
+    setSaving(true);
 
-            <form className="space-y-6" onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    try {
+      const response = await fetch("/api/weigh-ticket/save-and-download", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...form,
+          grossWeight: form.grossWeight ? Number(form.grossWeight) : undefined,
+          tareWeight: form.tareWeight ? Number(form.tareWeight) : undefined,
+          netWeight: net ?? undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMsg = errorData?.detail || errorData?.error || "Failed to save and generate PDF";
+        throw new Error(errorMsg);
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `weigh-ticket-${form.ticketNumber || "new"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      // Check if database save failed
+      const dbSaveFailed = response.headers.get("X-Database-Save-Failed") === "true";
+      if (dbSaveFailed) {
+        setStatus({ 
+          type: "success", 
+          message: "PDF downloaded! (Note: Could not save to database - database connection unavailable)" 
+        });
+      } else {
+        setStatus({ type: "success", message: "Saved to database and PDF downloaded!" });
+      }
+      
+      // Reset form but keep ticket number and date
+      setForm((prev) => ({
+        ...prev,
+        ticketNumber: generateWeightTicketNumber(),
+        timeIn: "",
+        timeOut: "",
+        carrierCompany: "",
+        driverName: "",
+        truckNumber: "",
+        trailerNumber: "",
+        referenceNumber: "",
+        materialType: "",
+        origin: DEFAULT_ORIGIN,
+        destination: "",
+        grossWeight: "",
+        tareWeight: "",
+        notes: "",
+      }));
+    } catch (err) {
+      setStatus({
+        type: "error",
+        message: err instanceof Error ? err.message : "Something went wrong",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="w-full">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
+        <div className="mb-5">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">Scale House</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">Submit Weigh Ticket</h1>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 text-emerald-700 px-3 py-1 text-xs font-semibold border border-emerald-100">
+              <Calculator className="h-4 w-4" />
+              Net = Gross - Tare
+            </div>
+          </div>
+          <p className="text-sm text-gray-600 mt-2">
+            All fields are optional. Fill in what you have and submit. Net weight auto-calculates when weights are provided. On submit, a copy is emailed to ralvarez@soilseedandwater.com.
+          </p>
+        </div>
+
+        <form className="space-y-4" onSubmit={handleSubmit}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Ticket #</label>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">Ticket #</label>
                   <input
-                    className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                     value={form.ticketNumber}
                     onChange={(e) => handleChange("ticketNumber", e.target.value)}
-                    required
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Date</label>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">Date</label>
                   <input
                     type="date"
-                    className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                     value={form.date}
                     onChange={(e) => handleChange("date", e.target.value)}
-                    required
                   />
                 </div>
-                <div className="flex gap-3">
-                  <div className="flex-1">
-                    <label className="text-sm font-medium text-gray-700">
-                      Time In <span className="text-gray-400 text-xs">(optional)</span>
-                    </label>
-                    <input
-                      type="time"
-                      className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
-                      value={form.timeIn}
-                      onChange={(e) => handleChange("timeIn", e.target.value)}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <label className="text-sm font-medium text-gray-700">
-                      Time Out <span className="text-gray-400 text-xs">(optional)</span>
-                    </label>
-                    <input
-                      type="time"
-                      className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
-                      value={form.timeOut}
-                      onChange={(e) => handleChange("timeOut", e.target.value)}
-                    />
-                  </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">
+                    Time In <span className="text-gray-400 text-xs font-normal">(optional)</span>
+                  </label>
+                  <input
+                    type="time"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                    value={form.timeIn}
+                    onChange={(e) => handleChange("timeIn", e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">
+                    Time Out <span className="text-gray-400 text-xs font-normal">(optional)</span>
+                  </label>
+                  <input
+                    type="time"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                    value={form.timeOut}
+                    onChange={(e) => handleChange("timeOut", e.target.value)}
+                  />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Driver Name</label>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">
+                    Driver Name <span className="text-gray-400 text-xs font-normal">(optional)</span>
+                  </label>
                   <input
-                    className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                     value={form.driverName}
                     onChange={(e) => handleChange("driverName", e.target.value)}
-                    required
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
-                    Carrier / Company <span className="text-gray-400 text-xs">(optional)</span>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">
+                    Carrier / Company <span className="text-gray-400 text-xs font-normal">(optional)</span>
                   </label>
                   <input
-                    className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                     value={form.carrierCompany}
                     onChange={(e) => handleChange("carrierCompany", e.target.value)}
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
-                    Truck # / Plate <span className="text-gray-400 text-xs">(optional)</span>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">
+                    Truck # / Plate <span className="text-gray-400 text-xs font-normal">(optional)</span>
                   </label>
                   <input
-                    className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                     value={form.truckNumber}
                     onChange={(e) => handleChange("truckNumber", e.target.value)}
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
-                    Trailer # <span className="text-gray-400 text-xs">(optional)</span>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">
+                    Trailer # <span className="text-gray-400 text-xs font-normal">(optional)</span>
                   </label>
                   <input
-                    className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                     value={form.trailerNumber}
                     onChange={(e) => handleChange("trailerNumber", e.target.value)}
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Material Type</label>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">
+                    Material Type <span className="text-gray-400 text-xs font-normal">(optional)</span>
+                  </label>
                   <input
-                    className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                     value={form.materialType}
                     onChange={(e) => handleChange("materialType", e.target.value)}
-                    required
                     placeholder="e.g., Food Waste, Green Waste"
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
-                    Reference / BOL # <span className="text-gray-400 text-xs">(optional)</span>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">
+                    Reference / BOL # <span className="text-gray-400 text-xs font-normal">(optional)</span>
                   </label>
                   <input
-                    className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                     value={form.referenceNumber}
                     onChange={(e) => handleChange("referenceNumber", e.target.value)}
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
-                    Origin <span className="text-gray-400 text-xs">(optional)</span>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">
+                    Origin <span className="text-gray-400 text-xs font-normal">(optional)</span>
                   </label>
                   <input
-                    className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                     value={form.origin}
                     onChange={(e) => handleChange("origin", e.target.value)}
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700">
-                    Destination <span className="text-gray-400 text-xs">(optional)</span>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">
+                    Destination <span className="text-gray-400 text-xs font-normal">(optional)</span>
                   </label>
                   <input
-                    className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                     value={form.destination}
                     onChange={(e) => handleChange("destination", e.target.value)}
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Gross Weight (lbs)</label>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">
+                    Gross Weight (lbs) <span className="text-gray-400 text-xs font-normal">(optional)</span>
+                  </label>
                   <input
                     type="number"
                     inputMode="decimal"
-                    className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                     value={form.grossWeight}
                     onChange={(e) => handleChange("grossWeight", e.target.value)}
-                    required
                   />
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Tare Weight (lbs)</label>
+                  <label className="text-sm font-medium text-gray-700 block mb-1">
+                    Tare Weight (lbs) <span className="text-gray-400 text-xs font-normal">(optional)</span>
+                  </label>
                   <input
                     type="number"
                     inputMode="decimal"
-                    className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                     value={form.tareWeight}
                     onChange={(e) => handleChange("tareWeight", e.target.value)}
-                    required
                   />
                 </div>
                 <div>
-                  <div className="text-sm font-medium text-gray-700 flex items-center justify-between">
+                  <label className="text-sm font-medium text-gray-700 block mb-1 flex items-center justify-between">
                     Net Weight (lbs)
-                    <span className="text-xs text-gray-400">auto</span>
-                  </div>
-                  <div className="mt-1 w-full rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-800 min-h-[44px] flex items-center shadow-xs">
+                    <span className="text-xs text-gray-400 font-normal">auto</span>
+                  </label>
+                  <div className="w-full rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800 min-h-[40px] flex items-center">
                     {net === null || Number.isNaN(net) ? "—" : `${net.toLocaleString()} lbs`}
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-700">Notes / Comments</label>
+                <label className="text-sm font-medium text-gray-700 block mb-1">Notes / Comments</label>
                 <textarea
-                  className="mt-1 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 shadow-xs"
+                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                   rows={3}
                   value={form.notes}
                   onChange={(e) => handleChange("notes", e.target.value)}
@@ -329,11 +412,20 @@ export default function WeighTicketPage() {
                 </div>
               )}
 
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={handleSaveAndDownload}
+                  disabled={saving}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-white text-sm font-semibold shadow-md hover:bg-emerald-700 transition-colors disabled:opacity-70"
+                >
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                  {saving ? "Saving..." : "Save and Download PDF"}
+                </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-3 text-white text-sm font-semibold shadow-md hover:bg-emerald-700 transition-colors disabled:opacity-70"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-white text-sm font-semibold shadow-md hover:bg-blue-700 transition-colors disabled:opacity-70"
                 >
                   {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                   {submitting ? "Sending..." : "Submit & Email"}
@@ -341,7 +433,7 @@ export default function WeighTicketPage() {
                 <button
                   type="button"
                   onClick={handleDownload}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-5 py-3 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 transition-colors"
                 >
                   <Download className="h-4 w-4" />
                   Download Blank PDF
@@ -349,41 +441,6 @@ export default function WeighTicketPage() {
               </div>
             </form>
           </div>
-
-          <div className="bg-white/90 backdrop-blur rounded-2xl shadow-md border border-gray-100 p-6 sm:p-7 lg:p-8 lg:sticky lg:top-6 h-fit">
-            <div className="text-center mb-5">
-              <div className="inline-flex items-center justify-center w-14 h-14 bg-emerald-100 rounded-full mb-3">
-                <FileText className="h-7 w-7 text-emerald-600" />
-              </div>
-              <h2 className="text-lg font-bold text-gray-900">Quick Guide</h2>
-              <p className="text-sm text-gray-500 mt-1">Fill the fields, net weight is auto-calculated.</p>
-            </div>
-            <div className="space-y-5 text-sm text-gray-600">
-              <div className="flex items-start gap-3">
-                <ArrowRight className="h-4 w-4 text-emerald-600 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-gray-800">Gross - Tare = Net</p>
-                  <p>Enter both weights in lbs; net fills in instantly.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <ArrowRight className="h-4 w-4 text-emerald-600 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-gray-800">Email goes to Rodolfo</p>
-                  <p>On submit, a copy is sent to ralvarez@soilseedandwater.com for records.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <ArrowRight className="h-4 w-4 text-emerald-600 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-gray-800">Need a blank copy?</p>
-                  <p>Use “Download Blank PDF” to print and hand-write if needed.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

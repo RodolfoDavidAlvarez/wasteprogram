@@ -37,37 +37,26 @@ export async function middleware(request: NextRequest) {
           return request.cookies.get(name)?.value;
         },
         set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-            // Set longer expiration for session cookies
-            maxAge: name.includes("auth") ? 60 * 60 * 24 * 7 : options.maxAge, // 7 days for auth cookies
-            sameSite: "lax",
-            secure: process.env.NODE_ENV === "production",
-            httpOnly: name.includes("auth-token") ? true : false,
-          });
+          // Set cookie on request for downstream middleware/handlers
+          request.cookies.set(name, value);
           response = NextResponse.next({
             request: {
               headers: request.headers,
             },
           });
+          // Set cookie on response with proper options for browser
           response.cookies.set({
             name,
             value,
             ...options,
-            maxAge: name.includes("auth") ? 60 * 60 * 24 * 7 : options.maxAge,
+            maxAge: name.includes("auth") ? 60 * 60 * 24 * 7 : options.maxAge, // 7 days for auth cookies
             sameSite: "lax",
             secure: process.env.NODE_ENV === "production",
             httpOnly: name.includes("auth-token") ? true : false,
           });
         },
         remove(name: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value: "",
-            ...options,
-          });
+          request.cookies.delete(name);
           response = NextResponse.next({
             request: {
               headers: request.headers,
@@ -113,11 +102,7 @@ export async function middleware(request: NextRequest) {
             return request.cookies.get(name)?.value;
           },
           set(name: string, value: string, options: CookieOptions) {
-            request.cookies.set({
-              name,
-              value,
-              ...options,
-            });
+            request.cookies.set(name, value);
             response = NextResponse.next({
               request: {
                 headers: request.headers,
@@ -130,11 +115,7 @@ export async function middleware(request: NextRequest) {
             });
           },
           remove(name: string, options: CookieOptions) {
-            request.cookies.set({
-              name,
-              value: "",
-              ...options,
-            });
+            request.cookies.delete(name);
             response = NextResponse.next({
               request: {
                 headers: request.headers,
@@ -171,3 +152,5 @@ export const config = {
   // Apply to everything except Next internals + static assets + API routes.
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };
+
+
