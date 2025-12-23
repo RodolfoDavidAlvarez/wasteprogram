@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Invoice INV-3LAG-20251223-001</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    @page { size: letter; margin: 0.5in; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-size: 11px;
+      color: #1f2937;
+      line-height: 1.5;
+      background: white;
+    }
+
+    .container { max-width: 7.5in; margin: 0 auto; padding: 20px; }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 3px solid #2563eb;
+      padding-bottom: 20px;
+      margin-bottom: 30px;
+    }
+
+    .company-name {
+      font-size: 28px;
+      font-weight: 700;
+      color: #2563eb;
+    }
+
+    .company-tagline {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    .invoice-title {
+      font-size: 32px;
+      font-weight: 700;
+      color: #1f2937;
+      text-align: right;
+    }
+
+    .invoice-number {
+      font-size: 14px;
+      color: #6b7280;
+      text-align: right;
+      margin-top: 4px;
+    }
+
+    .addresses {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 30px;
+    }
+
+    .address-block { width: 45%; }
+
+    .address-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .address-content {
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .address-name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .invoice-details {
+      display: flex;
+      gap: 40px;
+      margin-bottom: 30px;
+      background: #f9fafb;
+      padding: 16px 20px;
+      border-radius: 8px;
+    }
+
+    .detail-item { flex: 1; }
+
+    .detail-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .detail-value { font-size: 13px; font-weight: 600; }
+
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+
+    thead { background: #2563eb; color: white; }
+
+    th {
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    th.qty, th.rate, th.amount { text-align: right; }
+    th.date { text-align: center; }
+
+    td { padding: 12px 16px; border-bottom: 1px solid #e5e7eb; }
+    td.desc { font-weight: 500; }
+    td.date { text-align: center; color: #6b7280; }
+    td.qty, td.rate, td.amount { text-align: right; font-family: 'SF Mono', monospace; }
+    td.amount { font-weight: 600; }
+
+    .totals { display: flex; justify-content: flex-end; margin-top: 20px; }
+
+    .totals-table { width: 280px; }
+
+    .totals-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 16px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .totals-row.total {
+      background: #2563eb;
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+      border-radius: 4px;
+      border: none;
+    }
+
+    .notes {
+      margin-top: 40px;
+      padding: 20px;
+      background: #f9fafb;
+      border-radius: 8px;
+    }
+
+    .notes-title { font-weight: 600; margin-bottom: 8px; }
+    .notes-content { color: #6b7280; font-size: 11px; line-height: 1.6; }
+
+    .footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #e5e7eb;
+      text-align: center;
+      color: #9ca3af;
+      font-size: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <div class="company-name">Soil Seed & Water</div>
+        <div class="company-tagline">Waste Diversion Program</div>
+      </div>
+      <div>
+        <div class="invoice-title">INVOICE</div>
+        <div class="invoice-number">INV-3LAG-20251223-001</div>
+      </div>
+    </div>
+
+    <div class="addresses">
+      <div class="address-block">
+        <div class="address-label">From</div>
+        <div class="address-content">
+          <div class="address-name">Soil Seed & Water</div>
+          18980 Stanton Rd<br>
+          Congress, AZ 85332<br>
+          ralvarez@soilseedandwater.com
+        </div>
+      </div>
+      <div class="address-block">
+        <div class="address-label">Bill To</div>
+        <div class="address-content">
+          <div class="address-name">3LAG / Jack Mendoza</div>
+          Robinson Calf Ranch<br>
+          1001 East Hosking Avenue<br>
+          Bakersfield, CA 93307
+        </div>
+      </div>
+    </div>
+
+    <div class="invoice-details">
+      <div class="detail-item">
+        <div class="detail-label">Invoice Date</div>
+        <div class="detail-value">December 22, 2025</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Due Date</div>
+        <div class="detail-value">Net 30</div>
+      </div>
+      <div class="detail-item">
+        <div class="detail-label">Service Period</div>
+        <div class="detail-value">December 2025</div>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th class="desc">Description</th>
+          <th class="date">Date</th>
+          <th class="qty">Tons</th>
+          <th class="rate">Rate</th>
+          <th class="amount">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+      <tr>
+        <td class="desc">1. BOL-121925-01</td>
+        <td class="date">Dec 19, 2025</td>
+        <td class="qty">19.27</td>
+        <td class="rate">$20.00</td>
+        <td class="amount">$385.40</td>
+      </tr>
+    
+
+      <tr>
+        <td class="desc">2. BOL-121925-02</td>
+        <td class="date">Dec 19, 2025</td>
+        <td class="qty">17.61</td>
+        <td class="rate">$20.00</td>
+        <td class="amount">$352.20</td>
+      </tr>
+    
+
+      <tr>
+        <td class="desc">3. BOL-122225-03</td>
+        <td class="date">Dec 22, 2025</td>
+        <td class="qty">17.98</td>
+        <td class="rate">$20.00</td>
+        <td class="amount">$359.60</td>
+      </tr>
+    
+
+      <tr>
+        <td class="desc">4. BOL-122225-04</td>
+        <td class="date">Dec 22, 2025</td>
+        <td class="qty">19.04</td>
+        <td class="rate">$20.00</td>
+        <td class="amount">$380.80</td>
+      </tr>
+    
+      </tbody>
+    </table>
+
+    <div class="totals">
+      <div class="totals-table">
+        <div class="totals-row">
+          <span>Total Loads</span>
+          <span>4</span>
+        </div>
+        <div class="totals-row">
+          <span>Total Tonnage</span>
+          <span>73.90 tons</span>
+        </div>
+        <div class="totals-row">
+          <span>Rate per Ton</span>
+          <span>$20.00</span>
+        </div>
+        <div class="totals-row total">
+          <span>Amount Due</span>
+          <span>$1478.00</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div class="notes-title">Notes</div>
+      <div class="notes-content">
+        Outbound waste material delivery to Robinson Calf Ranch for livestock feed use.<br>
+        Origin: Congress, AZ &bull; Destination: Bakersfield, CA<br><br>
+        Payment Terms: Net 30 days<br>
+        Please remit payment to: Soil Seed & Water
+      </div>
+    </div>
+
+    <div class="footer">
+      Soil Seed & Water &bull; soilseedandwater.com &bull; Thank you for your business!
+    </div>
+  </div>
+</body>
+</html>
