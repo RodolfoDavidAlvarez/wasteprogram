@@ -5,16 +5,18 @@ export async function GET() {
   try {
     const { data, error } = await supabase
       .from("wd_delivery_records")
-      .select("*")
+      .select("id, vrNumber, loadNumber, status, deliveredAt, deliveredBy, photoUrls, notes, tonnage, scheduledDate, createdAt, updatedAt")
       .order("scheduledDate", { ascending: false })
       .limit(500);
 
-    if (error) throw error;
+    if (error) {
+      console.error("Error fetching delivery records:", error);
+      throw error;
+    }
 
     const records = (data ?? []).map((r) => ({
       ...r,
       photoUrls: r.photoUrls ? JSON.parse(r.photoUrls) : [],
-      weightTicketUrls: r.weightTicketUrls ? JSON.parse(r.weightTicketUrls) : [],
     }));
 
     return NextResponse.json({ records });
@@ -23,6 +25,8 @@ export async function GET() {
     return NextResponse.json({ error: "Failed to list delivery records" }, { status: 500 });
   }
 }
+
+
 
 
 
