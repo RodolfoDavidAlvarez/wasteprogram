@@ -13,8 +13,13 @@ import {
   Clock,
   AlertCircle,
   ChevronRight,
-  TrendingUp
+  TrendingUp,
+  DollarSign,
 } from "lucide-react";
+
+// Pricing constants
+const VANGUARD_RATE_PER_TON = 45;
+const OUTBOUND_RATE_PER_TON = 20;
 
 type DeliveryRecord = {
   id: string;
@@ -73,6 +78,18 @@ export default function DeliveriesPage() {
       .filter(r => r.photoUrls && r.photoUrls.length > 0)
       .reduce((sum, r) => sum + (r.tonnage || 0), 0);
 
+    // Calculate revenue by source
+    const vanguardTons = records
+      .filter(r => !r.vrNumber.startsWith("BOL-") && !r.vrNumber.startsWith("PENDING-") && !r.vrNumber.startsWith("TYSON-"))
+      .reduce((sum, r) => sum + (r.tonnage || 0), 0);
+    const outboundTons = records
+      .filter(r => r.vrNumber.startsWith("BOL-"))
+      .reduce((sum, r) => sum + (r.tonnage || 0), 0);
+
+    const vanguardRevenue = vanguardTons * VANGUARD_RATE_PER_TON;
+    const outboundRevenue = outboundTons * OUTBOUND_RATE_PER_TON;
+    const totalRevenue = vanguardRevenue + outboundRevenue;
+
     return {
       total: records.length,
       delivered: delivered.length,
@@ -80,6 +97,11 @@ export default function DeliveriesPage() {
       withPhotos: withPhotos.length,
       totalTonnage,
       documentedTonnage,
+      vanguardTons,
+      outboundTons,
+      vanguardRevenue,
+      outboundRevenue,
+      totalRevenue,
     };
   }, [records]);
 
@@ -220,21 +242,38 @@ export default function DeliveriesPage() {
           </Card>
         </div>
 
-        {/* Summary Card */}
-        <Card className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold opacity-90">Documented Weight</h3>
-                <p className="text-3xl font-bold mt-1">{stats.documentedTonnage.toFixed(2)} tons</p>
-                <p className="text-sm opacity-75 mt-1">
-                  {(stats.documentedTonnage * 2000).toLocaleString()} lbs from {stats.withPhotos} documented loads
-                </p>
+        {/* Summary Cards - Revenue */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold opacity-90">Total Revenue</h3>
+                  <p className="text-3xl font-bold mt-1">${stats.totalRevenue.toLocaleString()}</p>
+                  <p className="text-sm opacity-75 mt-1">
+                    {stats.totalTonnage.toFixed(2)} tons total
+                  </p>
+                </div>
+                <DollarSign className="h-12 w-12 opacity-30" />
               </div>
-              <TrendingUp className="h-12 w-12 opacity-30" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold opacity-90">Documented Weight</h3>
+                  <p className="text-3xl font-bold mt-1">{stats.documentedTonnage.toFixed(2)} tons</p>
+                  <p className="text-sm opacity-75 mt-1">
+                    {(stats.documentedTonnage * 2000).toLocaleString()} lbs from {stats.withPhotos} documented loads
+                  </p>
+                </div>
+                <TrendingUp className="h-12 w-12 opacity-30" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Vanguard Dog Food Loads */}
         {groupedRecords.vanguardRecords.length > 0 && (
@@ -244,6 +283,9 @@ export default function DeliveriesPage() {
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Package className="h-5 w-5 text-amber-600" />
                   Vanguard Renewables - Dog Food
+                  <span className="text-sm font-normal text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
+                    $45/ton
+                  </span>
                 </CardTitle>
                 <span className="text-sm text-gray-500">
                   {groupedRecords.vanguardRecords.length} loads
@@ -260,6 +302,7 @@ export default function DeliveriesPage() {
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
                       <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Weight (lbs)</th>
                       <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Tons</th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Amount</th>
                       <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Photos</th>
                       <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
                       <th className="px-4 py-3"></th>
@@ -271,6 +314,7 @@ export default function DeliveriesPage() {
                       .map((record) => {
                         const weight = formatWeight(record.tonnage);
                         const hasPhotos = record.photoUrls && record.photoUrls.length > 0;
+                        const amount = record.tonnage * VANGUARD_RATE_PER_TON;
                         return (
                           <tr key={record.id} className="hover:bg-gray-50 transition-colors">
                             <td className="px-4 py-3">
@@ -294,6 +338,9 @@ export default function DeliveriesPage() {
                             </td>
                             <td className="px-4 py-3 text-right font-mono text-sm font-semibold">
                               {weight.tons}
+                            </td>
+                            <td className="px-4 py-3 text-right font-mono text-sm font-semibold text-emerald-700">
+                              ${amount.toFixed(2)}
                             </td>
                             <td className="px-4 py-3 text-center">
                               {hasPhotos ? (
@@ -323,13 +370,16 @@ export default function DeliveriesPage() {
                   <tfoot className="bg-gray-50 border-t-2 border-gray-300">
                     <tr>
                       <td colSpan={3} className="px-4 py-3 text-sm font-semibold text-gray-700">
-                        Subtotal ({groupedRecords.vanguardRecords.length} loads)
+                        Subtotal ({groupedRecords.vanguardRecords.length} loads) @ $45/ton
                       </td>
                       <td className="px-4 py-3 text-right font-mono text-sm font-bold text-gray-900">
                         {(groupedRecords.vanguardRecords.reduce((sum, r) => sum + r.tonnage * 2000, 0)).toLocaleString()}
                       </td>
-                      <td className="px-4 py-3 text-right font-mono text-sm font-bold text-emerald-700">
+                      <td className="px-4 py-3 text-right font-mono text-sm font-bold text-gray-900">
                         {groupedRecords.vanguardRecords.reduce((sum, r) => sum + r.tonnage, 0).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono text-sm font-bold text-emerald-700">
+                        ${(groupedRecords.vanguardRecords.reduce((sum, r) => sum + r.tonnage, 0) * VANGUARD_RATE_PER_TON).toFixed(2)}
                       </td>
                       <td colSpan={3}></td>
                     </tr>
@@ -347,7 +397,10 @@ export default function DeliveriesPage() {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Truck className="h-5 w-5 text-blue-600" />
-                  Outbound Deliveries (3LAG)
+                  Outbound Deliveries (3LAG / Jack Mendoza)
+                  <span className="text-sm font-normal text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                    $20/ton
+                  </span>
                 </CardTitle>
                 <span className="text-sm text-gray-500">
                   {groupedRecords.outboundRecords.length} loads
@@ -363,6 +416,7 @@ export default function DeliveriesPage() {
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
                       <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Weight (lbs)</th>
                       <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Tons</th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Amount</th>
                       <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
                       <th className="px-4 py-3"></th>
                     </tr>
@@ -371,6 +425,7 @@ export default function DeliveriesPage() {
                     {groupedRecords.outboundRecords.map((record) => {
                       const weight = formatWeight(record.tonnage);
                       const hasPhotos = record.photoUrls && record.photoUrls.length > 0;
+                      const amount = record.tonnage * OUTBOUND_RATE_PER_TON;
                       return (
                         <tr key={record.id} className="hover:bg-gray-50 transition-colors">
                           <td className="px-4 py-3">
@@ -390,6 +445,9 @@ export default function DeliveriesPage() {
                           <td className="px-4 py-3 text-right font-mono text-sm font-semibold">
                             {weight.tons}
                           </td>
+                          <td className="px-4 py-3 text-right font-mono text-sm font-semibold text-blue-700">
+                            ${amount.toFixed(2)}
+                          </td>
                           <td className="px-4 py-3 text-center">
                             {getStatusBadge(record.status, hasPhotos)}
                           </td>
@@ -405,6 +463,23 @@ export default function DeliveriesPage() {
                       );
                     })}
                   </tbody>
+                  <tfoot className="bg-gray-50 border-t-2 border-gray-300">
+                    <tr>
+                      <td colSpan={2} className="px-4 py-3 text-sm font-semibold text-gray-700">
+                        Subtotal ({groupedRecords.outboundRecords.length} loads) @ $20/ton
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono text-sm font-bold text-gray-900">
+                        {(groupedRecords.outboundRecords.reduce((sum, r) => sum + r.tonnage * 2000, 0)).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono text-sm font-bold text-gray-900">
+                        {groupedRecords.outboundRecords.reduce((sum, r) => sum + r.tonnage, 0).toFixed(2)}
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono text-sm font-bold text-blue-700">
+                        ${(groupedRecords.outboundRecords.reduce((sum, r) => sum + r.tonnage, 0) * OUTBOUND_RATE_PER_TON).toFixed(2)}
+                      </td>
+                      <td colSpan={2}></td>
+                    </tr>
+                  </tfoot>
                 </table>
               </div>
             </CardContent>
