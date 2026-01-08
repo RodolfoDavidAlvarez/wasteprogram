@@ -456,6 +456,57 @@ function getManualSchedule(): {
       deliveryType: "client_delivery",
       wasteType: "off-spec pet food",
     },
+
+    // =============================================================================
+    // JANUARY 2026 - JACK MENDOZA OUTBOUND PICKUPS (Dog Food to Bakersfield)
+    // Source: Jack Mendoza email 1/5/26
+    // Destination: Robinson Calf Ranch, Bakersfield CA
+    // =============================================================================
+    // Monday 1/12/26
+    {
+      id: "jack-011226-1",
+      ticketNumber: "JACK-011226-1",
+      vrNumber: "JACK-011226",
+      scheduledDate: new Date(2026, 0, 12), // January 12, 2026
+      scheduledTimeWindow: "TBD",
+      note: "Jack Mendoza pickup - Dog food to Bakersfield",
+      estimatedWeight: 20,
+      client: { companyName: "3LAG / Jack Mendoza", accountNumber: "" },
+      statusTag: "scheduled",
+      status: "scheduled",
+      deliveryType: "outbound_pickup",
+      wasteType: "dog food",
+    },
+    // Wednesday 1/14/26
+    {
+      id: "jack-011426-1",
+      ticketNumber: "JACK-011426-1",
+      vrNumber: "JACK-011426",
+      scheduledDate: new Date(2026, 0, 14), // January 14, 2026
+      scheduledTimeWindow: "TBD",
+      note: "Jack Mendoza pickup - Dog food to Bakersfield",
+      estimatedWeight: 20,
+      client: { companyName: "3LAG / Jack Mendoza", accountNumber: "" },
+      statusTag: "scheduled",
+      status: "scheduled",
+      deliveryType: "outbound_pickup",
+      wasteType: "dog food",
+    },
+    // Friday 1/16/26
+    {
+      id: "jack-011626-1",
+      ticketNumber: "JACK-011626-1",
+      vrNumber: "JACK-011626",
+      scheduledDate: new Date(2026, 0, 16), // January 16, 2026
+      scheduledTimeWindow: "TBD",
+      note: "Jack Mendoza pickup - Dog food to Bakersfield",
+      estimatedWeight: 20,
+      client: { companyName: "3LAG / Jack Mendoza", accountNumber: "" },
+      statusTag: "scheduled",
+      status: "scheduled",
+      deliveryType: "outbound_pickup",
+      wasteType: "dog food",
+    },
   ];
 
   const todayIntakes = calendarIntakes.filter((i) => isSameDay(new Date(i.scheduledDate), now));
