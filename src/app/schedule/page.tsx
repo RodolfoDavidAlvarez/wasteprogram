@@ -462,6 +462,21 @@ function getManualSchedule(): {
     // Source: Jack Mendoza email 1/5/26
     // Destination: Robinson Calf Ranch, Bakersfield CA
     // =============================================================================
+    // Wednesday 1/8/26 (TODAY - Loading now at Parker Dairy, Congress AZ)
+    {
+      id: "jack-010826-1",
+      ticketNumber: "JACK-010826-1",
+      vrNumber: "JACK-010826",
+      scheduledDate: new Date(2026, 0, 8), // January 8, 2026
+      scheduledTimeWindow: "Loading Now",
+      note: "Jack Mendoza pickup - Dog food to Bakersfield (Loading at Parker Dairy)",
+      estimatedWeight: 20,
+      client: { companyName: "3LAG / Jack Mendoza", accountNumber: "" },
+      statusTag: "scheduled",
+      status: "scheduled",
+      deliveryType: "outbound_pickup",
+      wasteType: "dog food",
+    },
     // Monday 1/12/26
     {
       id: "jack-011226-1",
